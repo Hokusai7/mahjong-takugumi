@@ -1,0 +1,2553 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卓組ツール</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#fff; --text:#18202b; --muted:#6b7280;
+    --line:#d9dee8; --accent:#2563eb; --accent2:#e8f0ff;
+    --warn:#fff7ed; --warnline:#fdba74;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px}
+  h1{font-size:28px;margin:0 0 8px}
+  .lead-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 20px}
+  .lead{color:var(--muted);margin:0}
+  .help-btn{flex:0 0 auto;background:#eef1f6;color:#253047;padding:8px 12px;border-radius:9px;font-weight:700}
+  .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .operation-guide{font-size:13px;color:#4b5563;background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 10px;white-space:nowrap}
+  .help-panel{display:none;position:fixed;right:20px;top:80px;width:min(420px,calc(100vw - 40px));max-height:calc(100vh - 110px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 12px 35px rgba(0,0,0,.18);z-index:1000}
+  .help-panel.open{display:block}
+  .help-panel h2{font-size:20px;margin:0 0 10px;padding-right:70px}
+  .help-panel h3{font-size:15px;margin:14px 0 6px}
+  .help-panel p{margin:5px 0;color:#374151;line-height:1.7}
+  .help-panel ul{margin:6px 0 0 20px;padding:0;color:#374151;line-height:1.7}
+  .help-close{position:sticky;float:right;right:0;top:0;background:#eef1f6;color:#253047;padding:7px 10px;border-radius:8px;font-size:13px;z-index:2}
+  @media(max-width:800px){
+    .help-panel{right:10px;left:10px;top:70px;width:auto;max-height:calc(100vh - 90px)}
+  }
+  .grid{display:grid;grid-template-columns:minmax(460px,560px) 1fr;gap:18px;align-items:start}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+  label{display:block;font-weight:700;margin:0 0 6px}
+  .name-grid{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:visible}
+  .name-grid{--name-col:260px;position:relative}
+  .name-grid-head,.name-row{display:grid;grid-template-columns:34px 42px minmax(150px,var(--name-col)) minmax(105px,145px) minmax(250px,1fr) 42px;align-items:center;width:100%}
+  .round-participation{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0;padding-right:4px;padding-left:8px}
+  .round-mini{display:inline-flex;align-items:center;gap:2px;font-size:11px;white-space:nowrap}
+  .round-mini input{margin:0}
+  .round-quick{display:inline-flex;gap:4px;margin-right:2px}
+  .round-quick button{padding:4px 6px;font-size:11px;line-height:1.15;white-space:nowrap}
+  @media (max-width:900px){
+    .name-grid-head,.name-row{grid-template-columns:30px 38px minmax(130px,1fr) 125px minmax(220px,1.4fr) 38px}
+    .round-quick{flex-basis:100%}
+  }
+  @media (max-width:680px){
+    .name-grid-head,.name-row{grid-template-columns:28px 34px minmax(120px,1fr) 110px minmax(190px,1.5fr) 34px}
+    .round-mini{font-size:10px}
+    .round-quick button{padding:3px 5px;font-size:10px}
+  }
+  .name-grid-head{background:#f3f6fb;color:var(--muted);font-size:12px;font-weight:700;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}
+  .name-col-head{position:relative}
+  .name-resizer{position:absolute;top:0;right:-5px;width:10px;height:100%;cursor:col-resize;z-index:3}
+  .name-resizer::after{content:"";position:absolute;top:20%;bottom:20%;left:4px;width:2px;background:#c7ceda;border-radius:2px}
+  .name-resizer:hover::after{background:#7c8aa5}
+  .name-grid-head>div,.name-row>div{padding:7px 8px}
+  .name-rows{max-height:420px;overflow-y:auto;overflow-x:visible}
+  .name-row{border-bottom:1px solid #eef1f6}
+  .name-row:last-child{border-bottom:0}
+  .name-no{text-align:center;color:var(--muted);font-size:12px}
+  .name-input{width:100%;border:0;outline:none;background:transparent;font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;padding:5px 6px;border-radius:6px}
+  .name-input:focus{box-shadow:0 0 0 2px rgba(37,99,235,.18);background:#fff}
+  .row-palette{display:flex;gap:4px;align-items:center;justify-content:flex-start;flex-wrap:nowrap;position:relative;min-width:0;white-space:nowrap}
+  .row-color{width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,.15);padding:0}
+  .row-color.active{outline:2px solid #111827;outline-offset:1px}
+  .selected-labels{display:flex;gap:3px;align-items:center;flex-wrap:nowrap;min-height:24px;white-space:nowrap;flex:0 0 auto}
+  .label-chip{width:20px;height:20px;min-width:20px;border-radius:50%;border:1px solid rgba(0,0,0,.18);padding:0;flex:0 0 auto}
+  .label-more-chip{height:20px;min-width:27px;padding:0 6px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:10px;font-weight:700;color:#475569;white-space:nowrap;flex:0 0 auto}
+  .label-add-btn{min-width:24px;height:24px;padding:0 5px;border-radius:999px;font-weight:800;line-height:1;flex:0 0 auto;margin-right:2px}
+  .label-popover{display:none;position:absolute;left:0;top:30px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(15,23,42,.16);gap:7px;flex-wrap:wrap;width:182px}
+  .label-popover.open{display:flex}
+  .label-popover .row-color{width:28px;height:28px;border-radius:8px}
+  .bulk-label-bar{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;margin:8px 0;padding:7px 8px;border:1px solid var(--line);border-radius:10px;background:#f8fafc;white-space:nowrap;overflow:visible;position:relative;z-index:20;max-width:100%;box-sizing:border-box}
+  .bulk-label-count{font-size:13px;font-weight:800;color:#334155;white-space:nowrap;flex:0 0 auto}
+  .bulk-label-actions{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;flex:0 0 auto}
+  .bulk-label-picker{position:relative}
+  .bulk-label-trigger{display:inline-flex;align-items:center;gap:7px}
+  .bulk-label-swatch{display:inline-block;width:16px;height:16px;border-radius:5px;border:1px solid rgba(0,0,0,.2);background:#bfdbfe}
+  .bulk-label-popover{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:999;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(15,23,42,.16);gap:7px;flex-wrap:wrap;width:182px}
+  .bulk-label-popover.open{display:flex}
+  .bulk-label-popover .bulk-color-btn{display:inline-block;width:30px;height:30px;min-width:30px;min-height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.18);padding:0;appearance:none;-webkit-appearance:none}
+  .bulk-color-btn{width:26px;height:26px;border-radius:8px;border:1px solid rgba(0,0,0,.15);padding:0}
+  .bulk-color-btn.selected{outline:3px solid #111827;outline-offset:2px}
+  .bulk-divider{width:1px;height:24px;background:var(--line);margin:0 1px;flex:0 0 auto}
+  .bulk-label-bar > button,.bulk-label-picker{flex:0 0 auto}
+  .bulk-label-bar > button{padding-left:8px;padding-right:8px}
+  .select-cell{text-align:center}
+  .label-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
+  .label-settings-title{font-weight:700;margin-bottom:8px}
+  .condition-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
+  .condition-warning{display:none;margin-top:10px;padding:9px 10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13px;line-height:1.5}
+  .condition-warning.show{display:block}
+  .condition-title{font-weight:700;margin-bottom:8px}
+  .condition-builder{display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:center}
+  .condition-builder select,.condition-builder input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 8px;background:#fff}
+  .condition-list{display:grid;gap:6px;margin-top:8px}
+  .condition-preview-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+  .condition-preview{padding:8px 10px;border-radius:8px;background:#eef3fb;font-size:13px;line-height:1.5}
+  .condition-item{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 8px;background:#fff;font-size:13px}
+  .avoid-builder{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-top:10px}
+  .avoid-builder select{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 8px;background:#fff}
+  .avoid-list{display:grid;gap:6px;margin-top:8px}
+  .fixed-builder{display:grid;grid-template-columns:110px minmax(160px,1.4fr) 90px 130px auto;gap:8px;align-items:stretch;margin-top:10px}
+  .fixed-builder input,.fixed-builder select{width:100%;height:36px;border:1px solid var(--line);border-radius:7px;padding:7px 8px;background:#fff}
+  .fixed-builder button{height:36px;align-self:stretch;white-space:nowrap}
+  .fixed-list{display:grid;gap:6px;margin-top:8px}
+  .condition-remove{background:#f3f4f6;color:#6b7280;padding:5px 8px;border-radius:7px;font-size:12px}
+  .label-name-row{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:center;margin-bottom:6px}
+  .label-name-row:last-child{margin-bottom:0}
+  .label-dot{width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+  .label-name-input{width:100%;border:1px solid var(--line);border-radius:7px;padding:7px 8px;font-size:13px;background:#fff}
+  .person-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .person-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;font-size:11px;font-weight:700;line-height:1.3;border:1px solid rgba(0,0,0,.08)}
+  .row-color.none{background:linear-gradient(135deg,#fff 43%,#ef4444 44%,#ef4444 56%,#fff 57%)}
+  .delete-row{background:#f3f4f6;color:#6b7280;padding:5px 8px;border-radius:7px;font-size:12px}
+  .add-row{margin-top:8px}
+  .row-count-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .row-count-control{display:flex;align-items:center;gap:5px}
+  .row-count-control input{width:64px;height:34px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:14px}
+  .row-count-control button{white-space:nowrap;min-width:68px}
+  .row-total-preview{font-size:13px;color:#4b5563;white-space:nowrap;min-width:72px}
+  input[type=number]{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
+  .primary{background:var(--accent);color:#fff}
+  .secondary{background:#eef1f6;color:#253047}
+  .small{padding:8px 10px;font-size:13px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .export-label{font-size:13px;font-weight:800;color:#4b5563;margin-right:2px}
+  .export-row button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .utility-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .utility-label{font-size:13px;font-weight:800;color:#4b5563;margin-right:2px}
+  .utility-row button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .print-only{display:none}
+  @media print{
+    body{background:#fff}
+    .lead-row,.grid,.pair-matrix-card,.help-panel{display:none !important}
+    .print-only{display:block !important}
+    .print-sheet{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",sans-serif;color:#111}
+    .print-sheet h1{font-size:24px;margin:0 0 12px}
+    .print-round{break-inside:avoid;margin-bottom:18px}
+    .print-round h2{font-size:18px;margin:0 0 8px}
+    .print-table-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .print-table{border:1px solid #999;padding:8px}
+    .print-table-title{font-weight:700;margin-bottom:4px}
+    .print-bye{margin-top:6px;font-size:13px}
+  }
+  .color-tools{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .color-tools-title{font-weight:700;margin-bottom:8px}
+  .palette{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .color-btn{width:34px;height:34px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);padding:0}
+  .color-btn.active{box-shadow:0 0 0 3px #111827}
+  .color-none{background:linear-gradient(135deg,#fff 45%,#ef4444 46%,#ef4444 54%,#fff 55%)}
+  .c1{background:#fde68a}
+  .c2{background:#bfdbfe}
+  .c3{background:#bbf7d0}
+  .c4{background:#fecdd3}
+  .c5{background:#ddd6fe}
+  .color-list{display:grid;grid-template-columns:1fr;gap:5px;max-height:220px;overflow:auto}
+  .color-person{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fafbfe}
+  .color-chip{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.12);flex:0 0 auto}
+  .note{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.55}
+  .status{padding:10px 12px;border-radius:10px;background:#f3f6fb;margin-bottom:12px;font-size:14px}
+  .warning{background:var(--warn);border:1px solid var(--warnline)}
+  .status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .status-box{border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 10px}
+  .status-box-title{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px}
+  .status-box-value{font-size:14px;line-height:1.5}
+  .status-box-wide{grid-column:1 / -1}
+  .status-rounds{display:grid;gap:5px;margin-top:3px}
+  .status-round{padding:6px 8px;border-radius:7px;background:#fff7ed;border:1px solid #fed7aa}
+  .status-ok{background:#f0fdf4;border-color:#bbf7d0}
+  .bye-details{margin-top:7px}
+  .bye-details summary{cursor:pointer;font-weight:700;color:#374151}
+  .bye-list{display:grid;gap:4px;margin-top:7px}
+  .bye-person{display:flex;justify-content:space-between;gap:12px;padding:5px 7px;border-radius:7px;background:#f9fafb;border:1px solid #eef1f6}
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fafbfe}
+  .pair-matrix-card{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+  .pair-matrix-title{font-size:18px;font-weight:700;margin-bottom:4px}
+  .pair-matrix-note{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .pair-matrix-wrap{overflow:auto;max-width:100%;max-height:70vh;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .pair-matrix{border-collapse:separate;border-spacing:0;font-size:12px;min-width:max-content}
+  .pair-matrix th,.pair-matrix td{min-width:44px;height:36px;padding:5px 7px;text-align:center;border-right:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;background:#fff}
+  .pair-matrix th{font-weight:700;background:#f3f6fb}
+  .pair-matrix .corner{position:sticky;left:0;top:0;z-index:4;min-width:120px}
+  .pair-matrix .col-head{position:sticky;top:0;z-index:3;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pair-matrix .row-head{position:sticky;left:0;z-index:2;min-width:120px;max-width:180px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pair-matrix td.self{background:#f3f4f6;color:#9ca3af}
+  .pair-matrix td.count-0{color:#c4c7ce}
+  .pair-matrix td.count-1{font-weight:600}
+  .pair-matrix td.count-2{font-weight:700;background:#fff7ed}
+  .pair-matrix td.count-3plus{font-weight:800;background:#fee2e2}
+  .pair-empty{color:var(--muted);font-size:13px;padding:12px}
+  .stat b{display:block;font-size:20px;margin-top:2px}
+  .round{margin:0 0 16px}
+  .round h2{font-size:18px;margin:0 0 8px}
+  .tables{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .table{border:1px solid var(--line);border-radius:10px;padding:10px}
+  .table-title{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+  .player{background:var(--accent2);padding:7px 8px;border-radius:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab;user-select:none}
+  .player.locked-seat{outline:3px solid #2563eb;outline-offset:1px;position:relative}
+  .player.locked-seat::after{content:"🔒";position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:13px}
+  .player.lock-mode{cursor:pointer}
+  .player.lock-mode:hover{outline:2px dashed #2563eb;outline-offset:1px}
+  .round-actions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+  .player:active{cursor:grabbing}
+  .player.dragging{opacity:.45}
+  .player.drop-target{outline:2px dashed var(--accent);outline-offset:2px}
+  .bye{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fff7ed;border:1px solid #fed7aa;font-size:13px}
+  .empty{color:var(--muted);padding:30px 10px;text-align:center}
+  @media(max-width:800px){
+    .grid{grid-template-columns:1fr}
+    .tables{grid-template-columns:1fr}
+    .summary{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>卓組ツール</h1>
+  <div class="lead-row">
+    <p class="lead">四麻用。最大100人・10回戦まで。ラベル条件・同卓禁止・固定席を加味しながら、同卓の重複と待機回数の偏りをできるだけ抑えて卓組します。</p>
+    <div class="top-actions">
+      <div class="operation-guide">クリック：ロック／解除　｜　ドラッグ：席を入れ替え</div>
+      <button id="helpBtn" class="help-btn" type="button">使い方</button>
+    </div>
+  </div>
+
+  <section id="helpPanel" class="help-panel">
+    <button id="helpClose" class="help-close" type="button">閉じる</button>
+    <h2>使い方</h2>
+
+    <h3>1. 参加者を入力</h3>
+    <p>参加者名は1人1行で入力します。複数行をまとめて貼り付けることもできます。</p>
+    <p>「○行追加」「○行削除」で行数をまとめて調整できます。削除は一番下の行から行われ、右側に操作後の合計行数が表示されます。</p>
+    <p>「仮名を入れる」を押すと、現在ある空欄行に「参加者01」「参加者02」…と仮名を入れます。入力済みの名前は上書きしません。</p>
+    <p>各参加者の「参加回戦」で出場する回戦を指定できます。「全参加」は全回戦ON、「全休」は全回戦OFFです。途中参加・途中退出・特定回戦だけの欠席も、回戦番号のチェックで設定できます。</p>
+
+    <h3>2. ラベルを設定</h3>
+    <p>7種類のラベルに自由な名前を付けられます。初期色はラベル1＝青、ラベル2＝黄、ラベル3＝緑、ラベル4＝赤、ラベル5＝紫、ラベル6＝橙、ラベル7＝水色です。</p>
+    <p>1人に複数ラベルを付けることができます。参加者行ではラベル色を最大2個まで表示し、3個以上は「＋N」にまとめます。「＋」または「＋N」を押すと7色パレットが開きます。複数人へまとめて付ける場合は、左端のチェックで対象者を選び、「一括ラベル」をクリックして色を選び、「追加」または「解除」を押します。「全選択」「選択解除」も使えます。複数ラベルの場合、参加者名の背景色は縦方向に分割表示されます。</p>
+
+    <h3>3. 卓組条件を設定</h3>
+    <p>条件は参加者名を入力する前でも追加できます。</p>
+    <ul>
+      <li>「ラベル1（青）を各卓に2人以上」のように、指定ラベルを各卓に最低何人入れるか設定できます。</li>
+      <li>「ラベル1（青）とラベル2（黄）を同卓させない」のように、ラベル同士の同卓禁止を設定できます。</li>
+      <li>特定参加者を、指定した卓の「左上・右上・左下・右下」に固定できます。</li>
+      <li>固定参加者は「No.」または「参加者名」から選択できます。名前入力前でもNo.指定なら先に追加でき、あとでその行に名前を入れると自動で表示が更新されます。</li>
+      <li>固定条件は全回戦に適用されます。</li>
+    </ul>
+    <p>現在の参加者数やラベル人数では達成できない条件、固定席の競合などは、条件欄の下に赤枠で理由を表示します。</p>
+
+    <h3>4. 卓組を作成</h3>
+    <p>回戦数を指定して「卓組を作成」を押します。同卓回数、待機回数、追加済みの各種条件を加味して卓組します。</p>
+    <p>各回戦では、その回戦の「参加回戦」がONの参加者だけで卓組します。参加人数が4の倍数でない場合は待機者が出て、待機回数はなるべく均等になるよう調整します。</p>
+
+    <h3>5. 作成後の調整</h3>
+    <p>参加者名をクリックすると、その席をロック／解除できます。ロック中の席には🔒が表示されます。</p>
+    <p>同じ回戦内では、参加者名をドラッグして別の参加者に重ねることで席を入れ替えられます。</p>
+    <p>「この回戦をロック以外で再編成」では、その回戦だけを再編成します。「ロック以外を再編成」では、全回戦についてロック席を残して再編成します。</p>
+    <p>「ロックを全解除」で、全回戦の手動ロックをまとめて解除できます。</p>
+
+    <h3>6. 結果の確認</h3>
+    <p>結果上部には「同卓重複」「待機」「条件」を分けて表示します。</p>
+    <ul>
+      <li>待機欄では、待機回数の幅・待機者数・各参加者の待機回数・待機した回戦を確認できます。</li>
+      <li>条件は常に「達成」または「未達」で表示されます。</li>
+      <li>未達の場合は回戦ごとに、条件文・未達卓数・該当卓を表示します。</li>
+    </ul>
+    <p>ページ最下部の「同卓回数」では、左と上に参加者を並べた表で、誰と何回同卓したかを一覧できます。ドラッグ入れ替えや再編成後も自動更新されます。</p>
+
+    <h3>7. コピー・出力</h3>
+    <ul>
+      <li>📋「テキストコピー」：回戦ごとの卓組を、チャットやメールに貼りやすいプレーンテキストでコピーします。</li>
+      <li>▦「表形式コピー」：ExcelやGoogleスプレッドシートに貼ると、回戦・卓・位置・参加者・ラベルの列に分かれます。</li>
+      <li>⇩「CSV出力」：同じ内容をCSVファイルとして出力します。</li>
+      <li>🖨「印刷用表示」：卓組だけを印刷向けレイアウトで表示し、ブラウザの印刷画面を開きます。</li>
+    </ul>
+    <p>待機者もコピー・出力対象に含まれます。表形式とCSVでは「卓」列が「待機」になります。</p>
+
+    <h3>8. 保存・読込・Undo</h3>
+    <ul>
+      <li>💾「保存」：参加者、ラベル、条件、ロック、卓組結果をJSONファイルとして保存します。</li>
+      <li>↥「読込」：保存したJSONファイルを読み込み、状態を復元します。</li>
+      <li>↶「Undo」：ドラッグ入れ替え、ロック変更、再編成など直前の卓組操作を元に戻します。最大30回分保持します。</li>
+    </ul>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <label>参加者名（1行1人）</label>
+      <div class="name-grid">
+        <div class="name-grid-head">
+          <div class="select-cell"><input id="selectAllRows" type="checkbox" title="全選択"></div><div>No.</div><div class="name-col-head">参加者名<div id="nameResizer" class="name-resizer" title="ドラッグして列幅を変更"></div></div><div>ラベル色</div><div>参加回戦</div><div></div>
+        </div>
+        <div class="bulk-label-bar">
+          <span class="bulk-label-count" id="bulkLabelCount">選択中 0人</span>
+          <button type="button" class="secondary" id="bulkSelectAll">全選択</button>
+          <button type="button" class="secondary" id="bulkClearSelection">選択解除</button>
+          <span class="bulk-divider"></span>
+          <div class="bulk-label-picker">
+            <button type="button" class="secondary bulk-label-trigger" id="bulkLabelTrigger">
+              一括ラベル
+              <span id="bulkLabelSwatch" class="bulk-label-swatch"></span>
+            </button>
+            <div id="bulkLabelPopover" class="bulk-label-popover"></div>
+          </div>
+          <button type="button" class="secondary" id="bulkAddSelectedLabel">＋ 追加</button>
+          <button type="button" class="secondary" id="bulkRemoveSelectedLabel">− 解除</button>
+        </div>
+        <div id="nameRows" class="name-rows"></div>
+      </div>
+      <div class="row-count-controls">
+        <div class="row-count-control">
+          <input id="addRowCount" type="number" min="1" max="100" value="1">
+          <button class="secondary small" id="addRow">行追加</button>
+          <span id="addRowTotal" class="row-total-preview">→ 合計9行</span>
+        </div>
+        <div class="row-count-control">
+          <input id="deleteRowCount" type="number" min="1" max="100" value="1">
+          <button class="secondary small" id="deleteRows">行削除</button>
+          <span id="deleteRowTotal" class="row-total-preview">→ 合計7行</span>
+        </div>
+      </div>
+
+      <div class="label-settings">
+        <div class="label-settings-title">ラベル名</div>
+        <div id="labelSettings"></div>
+      </div>
+
+      <div class="condition-settings">
+        <div class="condition-title">卓組条件</div>
+        <div class="condition-builder" style="grid-template-columns:1fr 90px">
+          <select id="conditionLabel"></select>
+          <input id="conditionMin" type="number" min="1" max="4" value="1">
+        </div>
+        <div class="condition-preview-row">
+          <div id="conditionPreview" class="condition-preview"></div>
+          <button class="secondary small" id="addCondition">この条件を追加</button>
+        </div>
+        <div class="note" style="margin-top:10px;font-weight:700">追加済み条件</div>
+        <div id="conditionList" class="condition-list"></div>
+        <div class="note">例：「ラベル1（青）を各卓に2人以上」。複数条件を追加できます。</div>
+
+        <div class="condition-title" style="margin-top:14px">組み合わせ禁止</div>
+        <div class="avoid-builder" style="grid-template-columns:1fr 1fr">
+          <select id="avoidLabelA"></select>
+          <select id="avoidLabelB"></select>
+        </div>
+        <div class="condition-preview-row">
+          <div id="avoidPreview" class="condition-preview"></div>
+          <button class="secondary small" id="addAvoid">この条件を追加</button>
+        </div>
+        <div class="note" style="margin-top:10px;font-weight:700">追加済み禁止条件</div>
+        <div id="avoidList" class="avoid-list"></div>
+        <div class="note">例：「ラベル1（青）とラベル2（黄）を同卓させない」。同じラベル同士も指定できます。</div>
+
+        <div class="condition-title" style="margin-top:16px">特定参加者の固定</div>
+        <div class="fixed-builder" style="grid-template-columns:110px minmax(160px,1.4fr) 90px 130px">
+          <select id="fixedParticipantMode">
+            <option value="no">No.</option>
+            <option value="name">参加者名</option>
+          </select>
+          <select id="fixedParticipant"></select>
+          <input id="fixedTable" type="number" min="1" max="25" value="1">
+          <select id="fixedSeat">
+            <option value="0">左上</option>
+            <option value="1">右上</option>
+            <option value="2">左下</option>
+            <option value="3">右下</option>
+          </select>
+        </div>
+        <div class="condition-preview-row">
+          <div id="fixedPreview" class="condition-preview"></div>
+          <button class="secondary small" id="addFixed">この条件を追加</button>
+        </div>
+        <div class="note" style="margin-top:10px;font-weight:700">追加済み固定条件</div>
+        <div id="fixedList" class="fixed-list"></div>
+        <div class="note">No. は左端の参加者番号です。名前未入力でもNo.指定なら先に追加できます。固定条件は複数人追加でき、全回戦に適用されます。</div>
+        <div id="conditionWarning" class="condition-warning"></div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="rounds">回戦数</label>
+          <input id="rounds" type="number" min="1" max="10" value="4">
+        </div>
+        <div>
+          <label for="count">仮名人数</label>
+          <input id="count" type="number" min="4" max="100" value="16">
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="secondary" id="fill">仮名を入れる</button>
+        <button class="primary" id="generate">卓組を作成</button>
+        <button class="secondary" id="clearLocks">ロックを全解除</button>
+        <button class="secondary" id="rebuildUnlocked">ロック以外を再編成</button>
+        <button class="secondary" id="clear">クリア</button>
+      </div>
+
+      <div class="export-row">
+        <span class="export-label">コピー・出力</span>
+        <button class="secondary" id="copy">📋 テキストコピー</button>
+        <button class="secondary" id="copyTable">▦ 表形式コピー</button>
+        <button class="secondary" id="downloadCsv">⇩ CSV出力</button>
+        <button class="secondary" id="printView">🖨 印刷用表示</button>
+      </div>
+
+      <div class="utility-row">
+        <span class="utility-label">保存・履歴</span>
+        <button class="secondary" id="saveState">💾 保存</button>
+        <button class="secondary" id="loadState">↥ 読込</button>
+        <button class="secondary" id="undoBtn">↶ Undo</button>
+        <input id="loadStateFile" type="file" accept=".json,application/json" style="display:none">
+      </div>
+
+      <p class="note">
+        各回戦は「参加回戦」がONの参加者だけで編成します。参加人数が4の倍数でない場合は待機者を出し、待機回数の偏りをできるだけ抑えます。
+        卓組は、同卓重複・待機・ラベル条件・同卓禁止・固定席をまとめて評価して候補を選ぶ方式です。
+        すべての条件を完全に満たせない場合は、作成後に未達内容を表示します。
+      </p>
+    </section>
+
+    <section class="card">
+      <div id="status" class="status">参加者名を入力して「卓組を作成」を押してください。</div>
+      <div id="summary"></div>
+      <div id="results" class="empty">まだ卓組はありません。</div>
+    </section>
+  </div>
+
+  <section id="printSheet" class="print-only print-sheet"></section>
+
+  <section class="pair-matrix-card">
+    <div class="pair-matrix-title">同卓回数</div>
+    <div class="pair-matrix-note">左の参加者と上の参加者が何回同卓したかを一覧表示します。2回以上の同卓は強調表示されます。</div>
+    <div id="pairHistoryList" class="pair-matrix-wrap">
+      <div class="pair-empty">卓組を作成すると表示されます。</div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const roundsEl = $('rounds'), countEl = $('count');
+  const nameRowsEl = $('nameRows');
+  const addRowCountEl = $('addRowCount');
+  const deleteRowCountEl = $('deleteRowCount');
+  const addRowTotalEl = $('addRowTotal');
+  const deleteRowTotalEl = $('deleteRowTotal');
+  const statusEl = $('status'), summaryEl = $('summary'), resultsEl = $('results');
+  const labelSettingsEl = $('labelSettings');
+  const conditionLabelEl = $('conditionLabel');
+  const conditionMinEl = $('conditionMin');
+  const conditionPreviewEl = $('conditionPreview');
+  const conditionListEl = $('conditionList');
+  const avoidLabelAEl = $('avoidLabelA');
+  const avoidLabelBEl = $('avoidLabelB');
+  const avoidPreviewEl = $('avoidPreview');
+  const avoidListEl = $('avoidList');
+  const fixedParticipantModeEl = $('fixedParticipantMode');
+  const fixedParticipantEl = $('fixedParticipant');
+  const fixedTableEl = $('fixedTable');
+  const fixedSeatEl = $('fixedSeat');
+  const fixedPreviewEl = $('fixedPreview');
+  const fixedListEl = $('fixedList');
+  const conditionWarningEl = $('conditionWarning');
+  const pairHistoryListEl = $('pairHistoryList');
+  const printSheetEl = $('printSheet');
+  const bulkLabelCountEl = $('bulkLabelCount');
+  const selectAllRowsEl = $('selectAllRows');
+  const bulkLabelTriggerEl = $('bulkLabelTrigger');
+  const bulkLabelSwatchEl = $('bulkLabelSwatch');
+  const bulkLabelPopoverEl = $('bulkLabelPopover');
+  const bulkAddSelectedLabelEl = $('bulkAddSelectedLabel');
+  const bulkRemoveSelectedLabelEl = $('bulkRemoveSelectedLabel');
+  let selectedBulkLabel = 0;
+
+  document.addEventListener('click',()=>{
+    document.querySelectorAll('.label-popover.open').forEach(p=>p.classList.remove('open'));
+    if (bulkLabelPopoverEl) bulkLabelPopoverEl.classList.remove('open');
+  });
+  const undoStack = [];
+  const MAX_UNDO = 30;
+  const labelColors = ['#bfdbfe', '#fde68a', '#bbf7d0', '#fecdd3', '#ddd6fe', '#fed7aa', '#cffafe'];
+  const labelColorNames = ['青','黄','緑','赤','紫','橙','水'];
+  const labelNames = ['ラベル1','ラベル2','ラベル3','ラベル4','ラベル5','ラベル6','ラベル7'];
+  const personLabels = new Map();
+  const tableConditions = [];
+  const avoidLabelPairs = [];
+  const fixedParticipantConditions = [];
+  const lockedSeats = new Map();
+
+  function renderLabelSettings() {
+    labelSettingsEl.innerHTML = '';
+    labelColors.forEach((color,i) => {
+      const row = document.createElement('div');
+      row.className = 'label-name-row';
+      row.innerHTML = `
+        <div class="label-dot" style="background:${color}"></div>
+        <input class="label-name-input" data-index="${i}" type="text" value="${escapeAttr(labelNames[i])}" placeholder="ラベル名（空欄なら${labelColorNames[i]}）">`;
+      const input = row.querySelector('input');
+      input.addEventListener('input', () => {
+        labelNames[i] = input.value.trim();
+        renderConditions();
+        renderAvoidConditions();
+        if (window.lastSchedule) {
+          const rounds = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+          render(cleanNames(), rounds, window.lastSchedule);
+        }
+      });
+      labelSettingsEl.appendChild(row);
+    });
+    renderBulkLabelButtons();
+  }
+
+
+  function refreshConditionLabelOptions() {
+    const current = conditionLabelEl.value;
+    const currentA = avoidLabelAEl.value;
+    const currentB = avoidLabelBEl.value;
+    const options = labelNames.map((name,i)=>
+      `<option value="${i}">${escapeHtml(getLabelDisplayName(i))}</option>`
+    ).join('');
+    conditionLabelEl.innerHTML = options;
+    avoidLabelAEl.innerHTML = options;
+    avoidLabelBEl.innerHTML = options;
+    if ([...conditionLabelEl.options].some(o=>o.value===current)) conditionLabelEl.value=current;
+    if ([...avoidLabelAEl.options].some(o=>o.value===currentA)) avoidLabelAEl.value=currentA;
+    if ([...avoidLabelBEl.options].some(o=>o.value===currentB)) avoidLabelBEl.value=currentB;
+    updateConditionPreviews();
+  }
+
+  function updateConditionPreviews() {
+    const label = Number(conditionLabelEl.value || 0);
+    const min = Math.max(1, Math.min(4, parseInt(conditionMinEl.value) || 1));
+    conditionPreviewEl.innerHTML = `<b>${escapeHtml(getLabelDisplayName(label))}</b> を各卓に <b>${min}人以上</b>`;
+
+    const a = Number(avoidLabelAEl.value || 0);
+    const b = Number(avoidLabelBEl.value || 0);
+    avoidPreviewEl.innerHTML = `<b>${escapeHtml(getLabelDisplayName(a))}</b> と <b>${escapeHtml(getLabelDisplayName(b))}</b> を同卓させない`;
+  }
+
+  function renderConditions() {
+    refreshConditionLabelOptions();
+    conditionListEl.innerHTML = '';
+    if (!tableConditions.length) {
+      conditionListEl.innerHTML = '<div class="note">条件なし</div>';
+      return;
+    }
+    tableConditions.forEach((c,idx)=>{
+      const item = document.createElement('div');
+      item.className = 'condition-item';
+      item.innerHTML = `<span><b>${escapeHtml(getLabelDisplayName(c.label))}</b> を各卓に <b>${c.min}人以上</b></span>
+        <button type="button" class="condition-remove" data-index="${idx}">削除</button>`;
+      item.querySelector('button').addEventListener('click',()=>{
+        tableConditions.splice(idx,1);
+        renderConditions();
+      });
+      conditionListEl.appendChild(item);
+    });
+  }
+
+  function renderAvoidConditions() {
+    refreshConditionLabelOptions();
+    avoidListEl.innerHTML = '';
+    if (!avoidLabelPairs.length) {
+      avoidListEl.innerHTML = '<div class="note">禁止条件なし</div>';
+      return;
+    }
+    avoidLabelPairs.forEach((c,idx)=>{
+      const item = document.createElement('div');
+      item.className = 'condition-item';
+      item.innerHTML = `<span><b>${escapeHtml(getLabelDisplayName(c.a))}</b> と <b>${escapeHtml(getLabelDisplayName(c.b))}</b> を同卓させない</span>
+        <button type="button" class="condition-remove" data-index="${idx}">削除</button>`;
+      item.querySelector('button').addEventListener('click',()=>{
+        avoidLabelPairs.splice(idx,1);
+        renderAvoidConditions();
+      });
+      avoidListEl.appendChild(item);
+    });
+  }
+
+  function avoidPenaltyForGroup(group) {
+    let penalty = 0;
+    for (const c of avoidLabelPairs) {
+      let countA = 0, countB = 0;
+      group.forEach(p => {
+        const labels = personLabels.get(p) || [];
+        if (labels.includes(c.a)) countA++;
+        if (labels.includes(c.b)) countB++;
+      });
+
+      if (c.a === c.b) {
+        if (countA >= 2) penalty += (countA - 1) * 10000;
+      } else if (countA > 0 && countB > 0) {
+        penalty += countA * countB * 10000;
+      }
+    }
+    return penalty;
+  }
+
+  function avoidViolations(tables) {
+    const violations = [];
+    avoidLabelPairs.forEach(c=>{
+      const badTables=[];
+      tables.forEach((g,ti)=>{
+        let countA=0, countB=0;
+        g.forEach(p=>{
+          const labels=personLabels.get(p)||[];
+          if(labels.includes(c.a)) countA++;
+          if(labels.includes(c.b)) countB++;
+        });
+        let bad=false;
+        if(c.a===c.b) bad = countA>=2;
+        else bad = countA>0 && countB>0;
+        if(bad) badTables.push(ti+1);
+      });
+      if(badTables.length) {
+        violations.push({
+          condition: `${getLabelDisplayName(c.a)} と ${getLabelDisplayName(c.b)} を同卓させない`,
+          count: badTables.length,
+          tables: badTables
+        });
+      }
+    });
+    return violations;
+  }
+
+
+  const seatNames = ['左上','右上','左下','右下'];
+
+  function refreshFixedParticipantOptions() {
+    const allRows = getAllRowData();
+    const namedRows = allRows.filter(x => x.name);
+    const mode = fixedParticipantModeEl.value || 'no';
+    const current = fixedParticipantEl.value;
+
+    const rows = mode === 'no' ? allRows : namedRows;
+
+    fixedParticipantEl.innerHTML = rows.map(x=>{
+      const value = mode === 'no' ? String(x.no) : x.name;
+      const label = mode === 'no'
+        ? (x.name ? `No.${x.no}（${x.name}）` : `No.${x.no}（未入力）`)
+        : x.name;
+      return `<option value="${escapeAttr(value)}">${escapeHtml(label)}</option>`;
+    }).join('');
+
+    if ([...fixedParticipantEl.options].some(o=>o.value===current)) {
+      fixedParticipantEl.value = current;
+    }
+  }
+
+  function resolveSelectedParticipant() {
+    const allRows = getAllRowData();
+    const mode = fixedParticipantModeEl.value || 'no';
+    const value = fixedParticipantEl.value;
+
+    if (mode === 'no') {
+      const no = Number(value);
+      const row = allRows.find(x => x.no === no);
+      if (!row) return null;
+      return {
+        mode: 'no',
+        no,
+        name: row.name || ''
+      };
+    }
+
+    const exact = allRows.find(x => x.name === value);
+    return exact ? {
+      mode: 'name',
+      no: exact.no,
+      name: exact.name
+    } : null;
+  }
+
+  function fixedConditionDisplayName(c) {
+    if (c.mode === 'no') {
+      const row = getAllRowData().find(x => x.no === c.no);
+      const currentName = row ? row.name : '';
+      return currentName ? `No.${c.no}（${currentName}）` : `No.${c.no}（未入力）`;
+    }
+    return c.name;
+  }
+
+  function resolveFixedConditionName(c) {
+    if (c.mode === 'no') {
+      const row = getAllRowData().find(x => x.no === c.no);
+      return row && row.name ? row.name : null;
+    }
+    return c.name || null;
+  }
+
+  function updateFixedPreview() {
+    refreshFixedParticipantOptions();
+    const resolved = resolveSelectedParticipant();
+    const table = Math.max(1, parseInt(fixedTableEl.value) || 1);
+    const seat = Number(fixedSeatEl.value || 0);
+
+    if (!resolved) {
+      fixedPreviewEl.innerHTML = `参加者を選択してください`;
+      return;
+    }
+
+    const who = resolved.mode === 'no'
+      ? (resolved.name ? `No.${resolved.no}（${resolved.name}）` : `No.${resolved.no}（未入力）`)
+      : resolved.name;
+
+    fixedPreviewEl.innerHTML = `<b>${escapeHtml(who)}</b> を <b>${table}卓</b> の <b>${seatNames[seat]}</b> に固定`;
+  }
+
+  function renderFixedConditions() {
+    fixedListEl.innerHTML = '';
+    if (!fixedParticipantConditions.length) {
+      fixedListEl.innerHTML = '<div class="note">固定条件なし</div>';
+      return;
+    }
+    fixedParticipantConditions.forEach((c, idx) => {
+      const item = document.createElement('div');
+      item.className = 'condition-item';
+      item.innerHTML = `<span><b>${escapeHtml(fixedConditionDisplayName(c))}</b> を <b>${c.table+1}卓</b> の <b>${seatNames[c.seat]}</b> に固定</span>
+        <button type="button" class="condition-remove">削除</button>`;
+      item.querySelector('button').addEventListener('click', () => {
+        fixedParticipantConditions.splice(idx,1);
+        renderFixedConditions();
+      });
+      fixedListEl.appendChild(item);
+    });
+  }
+
+  function fixedSeatMapForRound(players) {
+    const map = new Map();
+    const playerSet = new Set(players);
+    for (const c of fixedParticipantConditions) {
+      const name = resolveFixedConditionName(c);
+      if (!name || !playerSet.has(name)) continue;
+      const k = `${c.table}:${c.seat}`;
+      if (!map.has(k)) map.set(k, name);
+    }
+    return map;
+  }
+
+  function fixedConflictMessage(players) {
+    const seenSeats = new Map();
+    const seenPlayers = new Map();
+    const maxTables = Math.floor(players.length / 4);
+    for (const c of fixedParticipantConditions) {
+      const name = resolveFixedConditionName(c);
+      const display = fixedConditionDisplayName(c);
+      if (!name) return `固定条件の ${display} に参加者名がまだ入力されていません。`;
+      if (!players.includes(name)) return `固定条件の参加者「${name}」が参加者一覧にいません。`;
+      if (c.table >= maxTables) return `${display} の固定先 ${c.table+1}卓 は、現在の参加人数では作成されません。`;
+      const sk = `${c.table}:${c.seat}`;
+      if (seenSeats.has(sk) && seenSeats.get(sk) !== name) return `${c.table+1}卓 ${seatNames[c.seat]} に複数人が指定されています。`;
+      if (seenPlayers.has(name) && seenPlayers.get(name) !== sk) return `${name} に複数の固定位置が指定されています。`;
+      seenSeats.set(sk,name);
+      seenPlayers.set(name,sk);
+    }
+    return '';
+  }
+
+  function showConditionWarning(message) {
+    conditionWarningEl.textContent = message;
+    conditionWarningEl.classList.add('show');
+  }
+
+  function clearConditionWarning() {
+    conditionWarningEl.textContent = '';
+    conditionWarningEl.classList.remove('show');
+  }
+
+  function countLabelMembers(labelIndex) {
+    let count = 0;
+    getRowData().forEach(({labels}) => {
+      if ((labels || []).includes(labelIndex)) count++;
+    });
+    return count;
+  }
+
+  function currentTableCount() {
+    const players = cleanNames().length;
+    return Math.floor(players / 4);
+  }
+
+  function validateTableCondition(label, min) {
+    const tables = currentTableCount();
+    const members = countLabelMembers(label);
+
+    if (tables <= 0) {
+      return '';
+    }
+
+    const required = tables * min;
+    if (members < required) {
+      return `${getLabelDisplayName(label)} は ${members}人ですが、${tables}卓すべてに ${min}人以上入れるには ${required}人必要です。`;
+    }
+
+    return '';
+  }
+
+  function validateAvoidCondition(a, b) {
+    const tables = currentTableCount();
+    if (tables <= 0) {
+      return '';
+    }
+
+    const countA = countLabelMembers(a);
+    const countB = countLabelMembers(b);
+
+    if (a === b) {
+      // At most one member of this label can sit at each table.
+      if (countA > tables) {
+        return `${getLabelDisplayName(a)} は ${countA}人いますが、同じラベル同士を同卓させない場合、${tables}卓では最大 ${tables}人までしか配置できません。`;
+      }
+      return '';
+    }
+
+    // Simple necessary-capacity test:
+    // If every A must be isolated from every B, the A-bearing and B-bearing tables must be disjoint.
+    const minTablesA = Math.ceil(countA / 4);
+    const minTablesB = Math.ceil(countB / 4);
+    if (minTablesA + minTablesB > tables) {
+      return `${getLabelDisplayName(a)} と ${getLabelDisplayName(b)} を完全に分けるには最低 ${minTablesA + minTablesB}卓必要ですが、現在は ${tables}卓です。`;
+    }
+
+    return '';
+  }
+
+  function conditionPenaltyForGroup(group) {
+    let penalty = 0;
+    for (const c of tableConditions) {
+      let count = 0;
+      for (const p of group) {
+        const labels = personLabels.get(p) || [];
+        if (labels.includes(c.label)) count++;
+      }
+      if (count < c.min) {
+        const shortage = c.min - count;
+        penalty += shortage * 5000;
+      }
+    }
+    return penalty;
+  }
+
+  function conditionViolations(tables) {
+    const violations = [];
+    tableConditions.forEach(c=>{
+      const badTables=[];
+      tables.forEach((g,ti)=>{
+        let count=0;
+        g.forEach(p=>{
+          if ((personLabels.get(p)||[]).includes(c.label)) count++;
+        });
+        if (count<c.min) badTables.push(ti+1);
+      });
+      if (badTables.length) {
+        violations.push({
+          condition: `${getLabelDisplayName(c.label)} を各卓に ${c.min}人以上`,
+          count: badTables.length,
+          tables: badTables
+        });
+      }
+    });
+    return violations;
+  }
+
+  function addNameRow(name='', labels=[], roundFlags=null) {
+    const row = document.createElement('div');
+    row.className = 'name-row';
+    row.dataset.labels = JSON.stringify(labels);
+    row.innerHTML = `
+      <div class="select-cell"><input class="row-select" type="checkbox" title="一括編集の対象にする"></div>
+      <div class="name-no"></div>
+      <div><input class="name-input" type="text" value="${escapeAttr(name)}" placeholder="参加者名"></div>
+      <div class="row-palette">
+        <div class="selected-labels"></div>
+        <button type="button" class="secondary label-add-btn" title="ラベルを追加・変更">＋</button>
+        <div class="label-popover">
+          ${labelColors.map((c,i)=>`<button type="button" class="row-color ${labels.includes(i)?'active':''}" data-label="${i}" style="background:${c}" title="${escapeAttr(labelNames[i])}"></button>`).join('')}
+        </div>
+      </div>
+      <div class="round-participation"></div>
+      <div><button type="button" class="delete-row">×</button></div>`;
+
+    const rowSelect = row.querySelector('.row-select');
+    rowSelect.addEventListener('change', updateBulkSelectionUI);
+
+    const roundWrap = row.querySelector('.round-participation');
+    const visibleRounds = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+    const flags = Array.isArray(roundFlags) ? roundFlags.slice(0,10) : Array(10).fill(true);
+    while (flags.length < 10) flags.push(true);
+
+    const quick = document.createElement('span');
+    quick.className = 'round-quick';
+    quick.innerHTML = '<button type="button" class="secondary round-all">全参加</button><button type="button" class="secondary round-none">全休</button>';
+    roundWrap.appendChild(quick);
+
+    for (let i=0;i<10;i++) {
+      const lab = document.createElement('label');
+      lab.className = 'round-mini';
+      lab.dataset.roundIndex = String(i);
+      lab.style.display = i < visibleRounds ? 'inline-flex' : 'none';
+      lab.innerHTML = `<input type="checkbox" ${flags[i] !== false ? 'checked' : ''}><span>${i+1}</span>`;
+      roundWrap.appendChild(lab);
+    }
+
+    quick.querySelector('.round-all').addEventListener('click',()=>{
+      roundWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);
+    });
+    quick.querySelector('.round-none').addEventListener('click',()=>{
+      roundWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    });
+
+    const input = row.querySelector('.name-input');
+    input.addEventListener('input', () => {
+      syncPersonLabels();
+      refreshFixedParticipantOptions();
+      updateFixedPreview();
+      renderFixedConditions();
+    });
+    input.addEventListener('paste', e => {
+      const text = (e.clipboardData || window.clipboardData).getData('text');
+      if (!text.includes('\n')) return;
+      e.preventDefault();
+      const lines = text.replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+      if (!lines.length) return;
+      input.value = lines[0];
+      let after = row;
+      for (let i=1;i<lines.length;i++) {
+        const nr = addNameRow(lines[i], []);
+        after.after(nr);
+        after = nr;
+      }
+      renumberRows();
+      syncPersonLabels();
+      updateInputRowBackgrounds();
+      refreshFixedParticipantOptions();
+      updateFixedPreview();
+      renderFixedConditions();
+    });
+
+    const palette = row.querySelector('.row-palette');
+    const popover = palette.querySelector('.label-popover');
+    const selectedWrap = palette.querySelector('.selected-labels');
+    const addLabelBtn = palette.querySelector('.label-add-btn');
+
+    const refreshSelectedLabels = () => refreshRowSelectedLabels(row);
+
+    addLabelBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.label-popover.open').forEach(p => {
+        if (p !== popover) p.classList.remove('open');
+      });
+      popover.classList.toggle('open');
+    });
+
+    popover.addEventListener('click', e => e.stopPropagation());
+
+    popover.querySelectorAll('.row-color').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.label);
+        let labelsNow = [];
+        try { labelsNow = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+        if (labelsNow.includes(idx)) labelsNow = labelsNow.filter(x=>x!==idx);
+        else labelsNow.push(idx);
+        labelsNow.sort((a,b)=>a-b);
+        row.dataset.labels = JSON.stringify(labelsNow);
+        btn.classList.toggle('active', labelsNow.includes(idx));
+        refreshSelectedLabels();
+        syncPersonLabels();
+        updateInputRowBackgrounds();
+        refreshFixedParticipantOptions();
+        updateFixedPreview();
+        renderFixedConditions();
+        if (window.lastSchedule) {
+          const rounds = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+          render(cleanNames(), rounds, window.lastSchedule);
+        }
+      });
+    });
+
+    refreshSelectedLabels();
+
+    row.querySelector('.delete-row').addEventListener('click', () => {
+      row.remove();
+      if (!nameRowsEl.children.length) addNameRow();
+      renumberRows();
+      syncPersonLabels();
+      updateInputRowBackgrounds();
+      refreshFixedParticipantOptions();
+      updateFixedPreview();
+      renderFixedConditions();
+    });
+
+    nameRowsEl.appendChild(row);
+    renumberRows();
+    return row;
+  }
+
+  function renumberRows() {
+    [...nameRowsEl.children].forEach((row,i) => {
+      const no = row.querySelector('.name-no');
+      if (no) no.textContent = i+1;
+    });
+    updateBulkSelectionUI();
+  }
+
+  function escapeAttr(s) {
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function selectedRows() {
+    return [...nameRowsEl.querySelectorAll('.name-row')].filter(row => row.querySelector('.row-select')?.checked);
+  }
+
+  function updateBulkSelectionUI() {
+    const rows = [...nameRowsEl.querySelectorAll('.name-row')];
+    const selected = selectedRows();
+    if (bulkLabelCountEl) bulkLabelCountEl.textContent = `選択中 ${selected.length}人`;
+    if (selectAllRowsEl) {
+      selectAllRowsEl.checked = rows.length > 0 && selected.length === rows.length;
+      selectAllRowsEl.indeterminate = selected.length > 0 && selected.length < rows.length;
+    }
+  }
+
+  function refreshRowSelectedLabels(row) {
+    const selectedWrap = row.querySelector('.selected-labels');
+    const popover = row.querySelector('.label-popover');
+    if (!selectedWrap || !popover) return;
+
+    let labelsNow = [];
+    try { labelsNow = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+
+    const visible = labelsNow.slice(0,2);
+    const hiddenCount = Math.max(0, labelsNow.length - visible.length);
+
+    selectedWrap.innerHTML =
+      visible.map(i =>
+        `<button type="button" class="label-chip" data-chip-label="${i}" style="background:${labelColors[i]}" title="${escapeAttr(getLabelDisplayName(i))}"></button>`
+      ).join('') +
+      (hiddenCount > 0
+        ? `<button type="button" class="label-more-chip" title="${escapeAttr(labelsNow.slice(2).map(i=>getLabelDisplayName(i)).join(' / '))}">＋${hiddenCount}</button>`
+        : '');
+
+    selectedWrap.querySelectorAll('.label-chip').forEach(chip=>{
+      chip.addEventListener('click',()=>{
+        const target = popover.querySelector(`.row-color[data-label="${chip.dataset.chipLabel}"]`);
+        if (target) target.click();
+      });
+    });
+
+    const more = selectedWrap.querySelector('.label-more-chip');
+    if (more) {
+      more.addEventListener('click',e=>{
+        e.stopPropagation();
+        document.querySelectorAll('.label-popover.open').forEach(p=>{
+          if (p !== popover) p.classList.remove('open');
+        });
+        popover.classList.toggle('open');
+      });
+    }
+  }
+
+
+  function applyBulkLabel(idx, mode) {
+    const rows = selectedRows();
+    if (!rows.length) {
+      showActionNotice('一括編集する参加者を選択してください。');
+      return;
+    }
+
+    rows.forEach(row=>{
+      let labelsNow = [];
+      try { labelsNow = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+
+      if (mode === 'add') {
+        if (!labelsNow.includes(idx)) labelsNow.push(idx);
+      } else {
+        labelsNow = labelsNow.filter(x=>x!==idx);
+      }
+      labelsNow.sort((a,b)=>a-b);
+      row.dataset.labels = JSON.stringify(labelsNow);
+
+      row.querySelectorAll('.label-popover .row-color').forEach(btn=>{
+        const colorIdx = Number(btn.dataset.label);
+        btn.classList.toggle('active', labelsNow.includes(colorIdx));
+      });
+      refreshRowSelectedLabels(row);
+    });
+
+    syncPersonLabels();
+    updateInputRowBackgrounds();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+    renderFixedConditions();
+
+    if (window.lastSchedule) {
+      const rounds = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+      render(cleanNames(), rounds, window.lastSchedule);
+    }
+
+    showActionNotice(`${rows.length}人のラベルを${mode==='add'?'追加':'解除'}しました。`);
+  }
+
+  function renderBulkLabelButtons() {
+    if (!bulkLabelPopoverEl || !bulkLabelSwatchEl) return;
+
+    bulkLabelPopoverEl.innerHTML = '';
+    labelColors.forEach((color,i)=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `bulk-color-btn${i===selectedBulkLabel?' selected':''}`;
+      btn.dataset.label = String(i);
+      btn.style.background = color;
+      btn.title = getLabelDisplayName(i) || `ラベル${i+1}`;
+      btn.setAttribute('aria-label', getLabelDisplayName(i) || `ラベル${i+1}`);
+      btn.addEventListener('click',e=>{
+        e.stopPropagation();
+        selectedBulkLabel = i;
+        bulkLabelSwatchEl.style.background = labelColors[selectedBulkLabel];
+        bulkLabelPopoverEl.querySelectorAll('.bulk-color-btn').forEach(b=>{
+          b.classList.toggle('selected', Number(b.dataset.label)===selectedBulkLabel);
+        });
+        bulkLabelPopoverEl.classList.remove('open');
+      });
+      bulkLabelPopoverEl.appendChild(btn);
+    });
+
+    bulkLabelSwatchEl.style.background = labelColors[selectedBulkLabel] || '#bfdbfe';
+  }
+
+
+  function getAllRowData() {
+    return [...nameRowsEl.querySelectorAll('.name-row')].map((row,index) => {
+      let labels = [];
+      try { labels = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+      const rounds = [...row.querySelectorAll('.round-participation input[type="checkbox"]')].map(cb=>cb.checked);
+      return {
+        no: index + 1,
+        name: row.querySelector('.name-input').value.trim(),
+        labels,
+        rounds
+      };
+    });
+  }
+
+  function getRowData() {
+    return [...nameRowsEl.querySelectorAll('.name-row')].map(row => {
+      let labels = [];
+      try { labels = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+      const rounds = [...row.querySelectorAll('.round-participation input[type="checkbox"]')].map(cb=>cb.checked);
+      return {
+        name: row.querySelector('.name-input').value.trim(),
+        labels,
+        rounds
+      };
+    }).filter(x => x.name);
+  }
+
+  function cleanNames() {
+    return [...new Set(getRowData().map(x=>x.name))];
+  }
+
+  function activeNamesForRound(roundIndex) {
+    return [...new Set(
+      getRowData()
+        .filter(x => x.rounds?.[roundIndex] !== false)
+        .map(x => x.name)
+    )];
+  }
+
+  function refreshParticipationRoundVisibility() {
+    const n = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+    nameRowsEl.querySelectorAll('.round-mini').forEach(el=>{
+      el.style.display = Number(el.dataset.roundIndex) < n ? 'inline-flex' : 'none';
+    });
+  }
+
+  function syncPersonLabels() {
+    personLabels.clear();
+    getRowData().forEach(({name,labels}) => {
+      personLabels.set(name, labels.slice());
+    });
+  }
+
+  function updateInputRowBackgrounds() {
+    [...nameRowsEl.querySelectorAll('.name-row')].forEach(row => {
+      const input = row.querySelector('.name-input');
+      const name = input ? input.value.trim() : '';
+      let labels = [];
+      try { labels = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
+      const colors = labels.map(i => labelColors[i]).filter(Boolean);
+      if (!colors.length) {
+        row.style.background = '';
+      } else if (colors.length === 1) {
+        row.style.background = colors[0];
+      } else {
+        const n = colors.length;
+        const stops = [];
+        colors.forEach((c, i) => {
+          const start = (i * 100 / n).toFixed(4);
+          const end = ((i + 1) * 100 / n).toFixed(4);
+          stops.push(`${c} ${start}%`, `${c} ${end}%`);
+        });
+        row.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
+      }
+    });
+  }
+
+  function setNameRows(names) {
+    nameRowsEl.innerHTML = '';
+    names.forEach(n => addNameRow(n,[]));
+    if (!names.length) addNameRow();
+    syncPersonLabels();
+  }
+
+  function getLabelDisplayName(i) {
+    const n = (labelNames[i] || '').trim();
+    const base = n || `ラベル${i+1}`;
+    const color = labelColorNames[i] || '';
+    return color ? `${base}（${color}）` : base;
+  }
+
+  function labelHtmlForPerson(name) {
+    const labels = personLabels.get(name) || [];
+    return labels.map(i => `<span class="tag" style="background:${labelColors[i]}">${escapeHtml(getLabelDisplayName(i))}</span>`).join('');
+  }
+
+  function personBackgroundStyle(name) {
+    const labels = personLabels.get(name) || [];
+    if (!labels.length) return '';
+    const colors = labels.map(i => labelColors[i]).filter(Boolean);
+    if (!colors.length) return '';
+    if (colors.length === 1) return `background:${colors[0]};`;
+
+    const n = colors.length;
+    const stops = [];
+    colors.forEach((c, i) => {
+      const start = (i * 100 / n).toFixed(4);
+      const end = ((i + 1) * 100 / n).toFixed(4);
+      stops.push(`${c} ${start}%`, `${c} ${end}%`);
+    });
+    return `background:linear-gradient(90deg, ${stops.join(',')});`;
+  }
+
+
+  function serializeScheduleData(data) {
+    if (!data) return null;
+    return {
+      schedule: JSON.parse(JSON.stringify(data.schedule || [])),
+      pairCounts: data.pairCounts instanceof Map ? [...data.pairCounts.entries()] : [],
+      byeCounts: data.byeCounts instanceof Map ? [...data.byeCounts.entries()] : []
+    };
+  }
+
+  function hydrateScheduleData(snapshot) {
+    if (!snapshot) return null;
+
+    const schedule = Array.isArray(snapshot.schedule)
+      ? JSON.parse(JSON.stringify(snapshot.schedule))
+      : [];
+
+    const pairCounts = new Map(
+      Array.isArray(snapshot.pairCounts) ? snapshot.pairCounts : []
+    );
+
+    const byeCounts = new Map(
+      Array.isArray(snapshot.byeCounts) ? snapshot.byeCounts : []
+    );
+
+    // 古い保存データや旧UndoデータではMapが失われていることがあるため再計算。
+    if (pairCounts.size === 0 && schedule.length) {
+      schedule.forEach(round => {
+        (round.tables || []).forEach(g => {
+          for (let i=0;i<g.length;i++) {
+            for (let j=i+1;j<g.length;j++) {
+              const k = key(g[i],g[j]);
+              pairCounts.set(k,(pairCounts.get(k)||0)+1);
+            }
+          }
+        });
+      });
+    }
+
+    if (byeCounts.size === 0 && schedule.length) {
+      cleanNames().forEach(name => byeCounts.set(name,0));
+      schedule.forEach(round => {
+        (round.byes || []).forEach(name => {
+          byeCounts.set(name,(byeCounts.get(name)||0)+1);
+        });
+      });
+    }
+
+    return {schedule, pairCounts, byeCounts};
+  }
+
+  function captureState() {
+    return {
+      rows: getAllRowData().map(x => ({name:x.name, labels:[...(x.labels||[])], rounds:[...(x.rounds||[])]})),
+      rounds: Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)),
+      count: Math.max(4,Math.min(100,parseInt(countEl.value)||16)),
+      labelNames: [...labelNames],
+      tableConditions: tableConditions.map(x=>({...x})),
+      avoidLabelPairs: avoidLabelPairs.map(x=>({...x})),
+      fixedParticipantConditions: fixedParticipantConditions.map(x=>({...x})),
+      lockedSeats: [...lockedSeats.entries()],
+      schedule: serializeScheduleData(window.lastSchedule)
+    };
+  }
+
+  function restoreState(state) {
+    if (!state) return;
+
+    nameRowsEl.innerHTML = '';
+    const rows = Array.isArray(state.rows) ? state.rows : [];
+    if (rows.length) rows.forEach(r=>addNameRow(r.name||'', Array.isArray(r.labels)?r.labels:[], Array.isArray(r.rounds)?r.rounds:null));
+    else addNameRow();
+
+    if (Array.isArray(state.labelNames)) {
+      for (let i=0;i<labelNames.length;i++) labelNames[i] = state.labelNames[i] ?? labelNames[i];
+    }
+
+    tableConditions.splice(0, tableConditions.length, ...((state.tableConditions||[]).map(x=>({...x}))));
+    avoidLabelPairs.splice(0, avoidLabelPairs.length, ...((state.avoidLabelPairs||[]).map(x=>({...x}))));
+    fixedParticipantConditions.splice(0, fixedParticipantConditions.length, ...((state.fixedParticipantConditions||[]).map(x=>({...x}))));
+
+    lockedSeats.clear();
+    (state.lockedSeats||[]).forEach(([k,v])=>lockedSeats.set(k,v));
+
+    roundsEl.value = state.rounds || 4;
+    countEl.value = state.count || 16;
+    refreshParticipationRoundVisibility();
+
+    window.lastSchedule = state.schedule ? hydrateScheduleData(state.schedule) : null;
+
+    renumberRows();
+    syncPersonLabels();
+    refreshParticipationRoundVisibility();
+  renderLabelSettings();
+  renderBulkLabelButtons();
+  updateBulkSelectionUI();
+    renderConditions();
+    renderAvoidConditions();
+    renderFixedConditions();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+    updateInputRowBackgrounds();
+    updateRowTotalPreviews();
+
+    if (window.lastSchedule) {
+      render(cleanNames(), Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+    } else {
+      summaryEl.innerHTML='';
+      resultsEl.className='empty';
+      resultsEl.textContent='まだ卓組はありません。';
+      pairHistoryListEl.innerHTML='<div class="pair-empty">卓組を作成すると表示されます。</div>';
+      statusEl.className='status';
+      statusEl.textContent='参加者名を入力して「卓組を作成」を押してください。';
+    }
+  }
+
+  function pushUndoState() {
+    undoStack.push(captureState());
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+  }
+
+  function doUndo() {
+    if (!undoStack.length) {
+      showActionNotice('戻せる操作がありません。');
+      return;
+    }
+    const state = undoStack.pop();
+    restoreState(state);
+    showActionNotice('直前の卓組操作を元に戻しました。');
+  }
+
+  function downloadJsonState() {
+    const state = captureState();
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '卓組データ.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  function buildPrintSheet() {
+    if (!window.lastSchedule) {
+      printSheetEl.innerHTML = '';
+      return;
+    }
+
+    const personLabelText = name => {
+      const labels = personLabels.get(name) || [];
+      if (!labels.length) return '';
+      return `（${labels.map(i=>getLabelDisplayName(i)).join('・')}）`;
+    };
+
+    printSheetEl.innerHTML = `
+      <h1>卓組表</h1>
+      ${window.lastSchedule.schedule.map((round,ri)=>`
+        <section class="print-round">
+          <h2>第${ri+1}回戦</h2>
+          <div class="print-table-grid">
+            ${round.tables.map((g,ti)=>`
+              <div class="print-table">
+                <div class="print-table-title">${ti+1}卓</div>
+                ${g.map((p,si)=>`<div>${seatNames[si]}：${escapeHtml(p)} ${escapeHtml(personLabelText(p))}</div>`).join('')}
+              </div>
+            `).join('')}
+          </div>
+          ${round.byes.length ? `<div class="print-bye">待機：${round.byes.map(escapeHtml).join('、')}</div>` : ''}
+        </section>
+      `).join('')}
+    `;
+  }
+
+  function shuffle(a) {
+    const b = a.slice();
+    for (let i=b.length-1;i>0;i--) {
+      const j = Math.floor(Math.random()*(i+1));
+      [b[i],b[j]]=[b[j],b[i]];
+    }
+    return b;
+  }
+
+  function key(a,b){ return a < b ? a+'|'+b : b+'|'+a; }
+
+  function pairPenalty(group, pairCounts) {
+    let p = 0;
+    for (let i=0;i<group.length;i++) {
+      for (let j=i+1;j<group.length;j++) {
+        const c = pairCounts.get(key(group[i], group[j])) || 0;
+        // Repeat opponents get increasingly expensive.
+        p += c===0 ? 0 : (c===1 ? 12 : 45 + c*20);
+      }
+    }
+    return p;
+  }
+
+  function chooseByes(players, byeCounts, byeNeeded) {
+    if (byeNeeded <= 0) return [];
+    const fixedNames = new Set(fixedParticipantConditions.map(c=>resolveFixedConditionName(c)).filter(Boolean));
+    const eligible = players.filter(p=>!fixedNames.has(p));
+    if (eligible.length < byeNeeded) return [];
+    const randomized = shuffle(eligible);
+    randomized.sort((a,b) => (byeCounts.get(a)||0) - (byeCounts.get(b)||0));
+    const min = byeCounts.get(randomized[0]) || 0;
+    // Prefer people at minimum bye count, then random among ties.
+    const pool = randomized.filter(p => (byeCounts.get(p)||0) <= min+1);
+    return shuffle(pool).sort((a,b)=>(byeCounts.get(a)||0)-(byeCounts.get(b)||0)).slice(0, byeNeeded);
+  }
+
+  function buildCandidate(active, pairCounts) {
+    const tableCount = Math.floor(active.length / 4);
+    const tables = Array.from({length:tableCount},()=>Array(4).fill(null));
+    const fixedMap = fixedSeatMapForRound(active);
+    const fixedPlayers = new Set();
+
+    for (const [k,name] of fixedMap.entries()) {
+      const [ti,si] = k.split(':').map(Number);
+      if (ti < tableCount && active.includes(name) && !fixedPlayers.has(name)) {
+        tables[ti][si] = name;
+        fixedPlayers.add(name);
+      }
+    }
+
+    let remaining = shuffle(active.filter(p=>!fixedPlayers.has(p)));
+
+    // Fill the most constrained tables first, sampling candidates to reduce repeat/condition penalties.
+    const tableOrder = [...Array(tableCount).keys()].sort((a,b)=>{
+      const ca=tables[a].filter(Boolean).length, cb=tables[b].filter(Boolean).length;
+      return cb-ca;
+    });
+
+    for (const ti of tableOrder) {
+      while (tables[ti].some(x=>x===null)) {
+        const slot = tables[ti].findIndex(x=>x===null);
+        if (!remaining.length) break;
+
+        let best = remaining[0], bestScore = Infinity;
+        const sample = shuffle(remaining).slice(0, Math.min(remaining.length, 40));
+        for (const cand of sample) {
+          const test = tables[ti].slice();
+          test[slot] = cand;
+          const filled = test.filter(Boolean);
+          let s = pairPenalty(filled, pairCounts);
+
+          // Apply full group conditions only when the table is complete.
+          if (filled.length === 4) {
+            s += conditionPenaltyForGroup(filled) + avoidPenaltyForGroup(filled);
+          }
+          s += Math.random()*0.2;
+          if (s < bestScore) { bestScore=s; best=cand; }
+        }
+        tables[ti][slot] = best;
+        remaining = remaining.filter(x=>x!==best);
+      }
+    }
+    return tables;
+  }
+
+  function scoreRound(tables, pairCounts) {
+    let score = 0;
+    let repeats = 0;
+    let maxSeen = 0;
+    for (const g of tables) {
+      for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) {
+        const c = pairCounts.get(key(g[i],g[j])) || 0;
+        if (c>0) repeats++;
+        maxSeen = Math.max(maxSeen, c+1);
+        score += c===0 ? 0 : (c===1 ? 12 : 45 + c*20);
+      }
+      score += conditionPenaltyForGroup(g) + avoidPenaltyForGroup(g);
+    }
+    return {score,repeats,maxSeen};
+  }
+
+  function generateSchedule(players, rounds) {
+    const pairCounts = new Map();
+    const byeCounts = new Map(players.map(p=>[p,0]));
+    const schedule = [];
+
+    for (let r=0;r<rounds;r++) {
+      const roundPlayers = activeNamesForRound(r);
+      const byeNeeded = roundPlayers.length % 4;
+      let bestRound = null;
+      let bestScore = Infinity;
+
+      // Generate many alternatives for this round.
+      const outerTrials = roundPlayers.length <= 32 ? 350 : 180;
+      for (let trial=0;trial<outerTrials;trial++) {
+        const byes = chooseByes(roundPlayers, byeCounts, byeNeeded);
+        const byeSet = new Set(byes);
+        const active = roundPlayers.filter(p => !byeSet.has(p));
+        const tables = buildCandidate(active, pairCounts);
+        const sc = scoreRound(tables, pairCounts);
+
+        // Penalize unequal bye totals for chosen byes.
+        const projected = new Map(byeCounts);
+        byes.forEach(p => projected.set(p,(projected.get(p)||0)+1));
+        const vals = roundPlayers.map(p=>projected.get(p)||0);
+        const spread = vals.length ? Math.max(...vals)-Math.min(...vals) : 0;
+        const totalScore = sc.score + spread*100 + sc.repeats*1.5 + Math.random();
+
+        if (totalScore < bestScore) {
+          bestScore = totalScore;
+          bestRound = {tables, byes};
+        }
+      }
+
+      bestRound.byes.forEach(p=>byeCounts.set(p,(byeCounts.get(p)||0)+1));
+      for (const g of bestRound.tables) {
+        for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) {
+          const k = key(g[i],g[j]);
+          pairCounts.set(k,(pairCounts.get(k)||0)+1);
+        }
+      }
+      schedule.push(bestRound);
+    }
+
+    return {schedule, pairCounts, byeCounts};
+  }
+
+  function seatKey(roundIndex, tableIndex, playerIndex) {
+    return `${roundIndex}:${tableIndex}:${playerIndex}`;
+  }
+
+  function isSeatLocked(roundIndex, tableIndex, playerIndex) {
+    return lockedSeats.has(seatKey(roundIndex, tableIndex, playerIndex));
+  }
+
+  function toggleSeatLock(roundIndex, tableIndex, playerIndex, playerName) {
+    const k = seatKey(roundIndex, tableIndex, playerIndex);
+    if (lockedSeats.has(k)) lockedSeats.delete(k);
+    else lockedSeats.set(k, playerName);
+  }
+
+  function rebuildRoundUnlocked(roundIndex) {
+    if (!window.lastSchedule) return;
+    const round = window.lastSchedule.schedule[roundIndex];
+    const originalTables = round.tables.map(g => g.slice());
+
+    const lockedPositions = [];
+    const fixedPositions = [];
+    const fixedByPlayer = new Set();
+
+    // Permanent fixed participant conditions.
+    fixedParticipantConditions.forEach(c=>{
+      const name = resolveFixedConditionName(c);
+      if (name && c.table < originalTables.length && originalTables[c.table] && c.seat < 4) {
+        fixedPositions.push({ti:c.table,pi:c.seat,p:name});
+        fixedByPlayer.add(name);
+      }
+    });
+
+    // User-click locks, except where a fixed condition already occupies that seat.
+    originalTables.forEach((g,ti)=>{
+      g.forEach((p,pi)=>{
+        if (isSeatLocked(roundIndex,ti,pi) && !fixedPositions.some(x=>x.ti===ti && x.pi===pi)) {
+          lockedPositions.push({ti,pi,p});
+        }
+      });
+    });
+
+    const heldPlayers = new Set([...fixedPositions.map(x=>x.p), ...lockedPositions.map(x=>x.p)]);
+    const freePlayers = originalTables.flat().filter(p=>!heldPlayers.has(p));
+
+    let bestTables = originalTables.map(g=>g.slice());
+    let bestScore = Infinity;
+    const trials = freePlayers.length <= 32 ? 500 : 220;
+
+    for (let t=0;t<trials;t++) {
+      const pool = shuffle(freePlayers);
+      const tables = originalTables.map(g=>Array(g.length).fill(null));
+
+      fixedPositions.forEach(x=>tables[x.ti][x.pi]=x.p);
+      lockedPositions.forEach(x=>{
+        if (tables[x.ti][x.pi]===null) tables[x.ti][x.pi]=x.p;
+      });
+
+      let idx=0;
+      for (let ti=0;ti<tables.length;ti++) {
+        for (let pi=0;pi<tables[ti].length;pi++) {
+          if (tables[ti][pi]===null) tables[ti][pi]=pool[idx++];
+        }
+      }
+
+      const pairCounts = new Map();
+      window.lastSchedule.schedule.forEach((r,ri)=>{
+        if (ri===roundIndex) return;
+        r.tables.forEach(g=>{
+          for(let i=0;i<g.length;i++) for(let j=i+1;j<g.length;j++){
+            const k=key(g[i],g[j]);
+            pairCounts.set(k,(pairCounts.get(k)||0)+1);
+          }
+        });
+      });
+
+      let score = 0;
+      tables.forEach(g=>{
+        score += pairPenalty(g,pairCounts);
+        score += conditionPenaltyForGroup(g);
+        score += avoidPenaltyForGroup(g);
+      });
+
+      if (score < bestScore) {
+        bestScore = score;
+        bestTables = tables.map(g=>g.slice());
+      }
+    }
+
+    round.tables = bestTables;
+    rebuildPairCounts();
+  }
+
+  function rebuildAllUnlocked() {
+    if (!window.lastSchedule) return;
+    pushUndoState();
+    for (let ri=0;ri<window.lastSchedule.schedule.length;ri++) {
+      rebuildRoundUnlocked(ri);
+    }
+    render(cleanNames(), Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+    statusEl.insertAdjacentHTML('afterbegin','<div class="status-box status-ok" style="margin-bottom:8px"><div class="status-box-value">ロックした席を固定して再編成しました。</div></div>');
+  }
+
+  function rebuildPairCounts() {
+    if (!window.lastSchedule) return;
+    const pairCounts = new Map();
+    for (const round of window.lastSchedule.schedule) {
+      for (const g of round.tables) {
+        for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) {
+          const k = key(g[i],g[j]);
+          pairCounts.set(k,(pairCounts.get(k)||0)+1);
+        }
+      }
+    }
+    window.lastSchedule.pairCounts = pairCounts;
+  }
+
+  function renderPairHistory() {
+    if (!window.lastSchedule || !window.lastSchedule.pairCounts) {
+      pairHistoryListEl.innerHTML = '<div class="pair-empty">卓組を作成すると表示されます。</div>';
+      return;
+    }
+
+    const players = cleanNames();
+    if (!players.length) {
+      pairHistoryListEl.innerHTML = '<div class="pair-empty">参加者がいません。</div>';
+      return;
+    }
+
+    const pairCounts = window.lastSchedule.pairCounts;
+
+    let table = '<table class="pair-matrix"><thead><tr>';
+    table += '<th class="corner">誰が ＼ 誰と</th>';
+    players.forEach(p => {
+      table += `<th class="col-head" title="${escapeAttr(p)}">${escapeHtml(p)}</th>`;
+    });
+    table += '</tr></thead><tbody>';
+
+    players.forEach((rowPlayer, ri) => {
+      table += `<tr><th class="row-head" title="${escapeAttr(rowPlayer)}">${escapeHtml(rowPlayer)}</th>`;
+      players.forEach((colPlayer, ci) => {
+        if (ri === ci) {
+          table += '<td class="self">—</td>';
+          return;
+        }
+        const count = pairCounts.get(key(rowPlayer, colPlayer)) || 0;
+        const cls = count >= 3 ? 'count-3plus' : count === 2 ? 'count-2' : count === 1 ? 'count-1' : 'count-0';
+        table += `<td class="${cls}" title="${escapeAttr(rowPlayer)} × ${escapeAttr(colPlayer)}：${count}回">${count}</td>`;
+      });
+      table += '</tr>';
+    });
+
+    table += '</tbody></table>';
+    pairHistoryListEl.innerHTML = table;
+  }
+
+  function render(players, rounds, data) {
+    if (!(data.pairCounts instanceof Map) || !(data.byeCounts instanceof Map)) {
+      const repaired = hydrateScheduleData(serializeScheduleData({
+        schedule: data.schedule || [],
+        pairCounts: data.pairCounts instanceof Map ? data.pairCounts : new Map(),
+        byeCounts: data.byeCounts instanceof Map ? data.byeCounts : new Map()
+      }));
+      data.pairCounts = repaired.pairCounts;
+      data.byeCounts = repaired.byeCounts;
+    }
+    let repeatedPairs=0, tripleOrMore=0, maxPair=0;
+    for (const c of data.pairCounts.values()) {
+      if (c>=2) repeatedPairs++;
+      if (c>=3) tripleOrMore++;
+      maxPair=Math.max(maxPair,c);
+    }
+    const participatingNames = players.filter((name,idx) => {
+      const row = getRowData().find(x=>x.name===name);
+      return row ? row.rounds.slice(0,rounds).some(Boolean) : true;
+    });
+    const byeVals = participatingNames.map(name=>data.byeCounts.get(name)||0);
+    const maxBye = byeVals.length ? Math.max(...byeVals) : 0;
+    const minBye = byeVals.length ? Math.min(...byeVals) : 0;
+
+    summaryEl.innerHTML = `
+      <div class="summary">
+        <div class="stat"><span>参加者</span><b>${players.length}</b></div>
+        <div class="stat"><span>回戦</span><b>${rounds}</b></div>
+        <div class="stat"><span>2回以上同卓ペア</span><b>${repeatedPairs}</b></div>
+        <div class="stat"><span>最大同卓回数</span><b>${maxPair || 1}</b></div>
+      </div>`;
+
+    const frag = document.createDocumentFragment();
+    data.schedule.forEach((round, ri) => {
+      const sec=document.createElement('section');
+      sec.className='round';
+      const h=document.createElement('h2');
+      h.textContent=`第${ri+1}回戦`;
+      sec.appendChild(h);
+
+      const actions=document.createElement('div');
+      actions.className='round-actions';
+      actions.innerHTML=`<button type="button" class="secondary small" data-rebuild-round="${ri}">この回戦をロック以外で再編成</button>`;
+      sec.appendChild(actions);
+
+      const tables=document.createElement('div');
+      tables.className='tables';
+      round.tables.forEach((g,ti)=>{
+        const box=document.createElement('div');
+        box.className='table';
+        box.innerHTML=`<div class="table-title">${ti+1}卓</div><div class="players">${
+          g.map((p,pi)=>`
+            <div class="player ${isSeatLocked(ri,ti,pi)?'locked-seat':''} lock-mode"
+                 draggable="${!isSeatLocked(ri,ti,pi)}"
+                 data-round="${ri}" data-table="${ti}" data-player="${pi}"
+                 style="${personBackgroundStyle(p)}">
+              <div class="person-wrap"><span class="person-name">${escapeHtml(p)}</span></div>
+            </div>`).join('')
+        }</div>`;
+        tables.appendChild(box);
+      });
+      sec.appendChild(tables);
+
+      if (round.byes.length) {
+        const bye=document.createElement('div');
+        bye.className='bye';
+        bye.innerHTML=`待機：${round.byes.map(escapeHtml).join('、')}`;
+        sec.appendChild(bye);
+      }
+      frag.appendChild(sec);
+    });
+    resultsEl.innerHTML='';
+    resultsEl.className='';
+    resultsEl.appendChild(frag);
+
+    enableDragSwap();
+    enableLockControls();
+
+    const allViolations = [];
+    data.schedule.forEach((round,ri)=>{
+      const v = conditionViolations(round.tables);
+      const av = avoidViolations(round.tables);
+      const merged = [...v, ...av];
+      if (merged.length) allViolations.push({round:ri+1, items:merged});
+    });
+
+    statusEl.className='status';
+    const repeatText = repeatedPairs > 0
+      ? `2回以上同卓したペア：<b>${repeatedPairs}組</b>`
+      : `2回以上同卓したペア：<b>0組</b>`;
+
+    const byeRounds = new Map();
+    data.schedule.forEach((round,ri)=>{
+      round.byes.forEach(name=>{
+        if (!byeRounds.has(name)) byeRounds.set(name, []);
+        byeRounds.get(name).push(ri+1);
+      });
+    });
+
+    const byeEntries = [...data.byeCounts.entries()]
+      .filter(([,count]) => count > 0)
+      .map(([name,count]) => ({name, count, rounds: byeRounds.get(name) || []}))
+      .sort((a,b) => b.count-a.count || a.name.localeCompare(b.name,'ja'));
+
+    const byeText = `待機回数：<b>${minBye}〜${maxBye}回</b>　｜　待機者：<b>${byeEntries.length}人</b>`;
+
+    const byeDetailHtml = byeEntries.length
+      ? `<details class="bye-details">
+           <summary>待機者一覧</summary>
+           <div class="bye-list">
+             ${byeEntries.map(item => `
+               <div class="bye-person" style="align-items:flex-start">
+                 <div>
+                   <div>${escapeHtml(item.name)}</div>
+                   <div style="font-size:12px;color:var(--muted);margin-top:2px">
+                     第${item.rounds.join('・第')}回戦
+                   </div>
+                 </div>
+                 <b>${item.count}回</b>
+               </div>
+             `).join('')}
+           </div>
+         </details>`
+      : `<div class="status-box-value" style="margin-top:6px;color:var(--muted)">待機者はいません。</div>`;
+
+    let conditionHtml = '';
+    if (allViolations.length) {
+      conditionHtml = `
+        <div class="status-box status-box-wide">
+          <div class="status-box-title">条件</div>
+          <div class="status-box-value" style="font-weight:800;margin-bottom:6px">未達</div>
+          <div class="status-rounds">
+            ${allViolations.map(x => `
+              <div class="status-round">
+                <b>第${x.round}回戦</b>
+                ${x.items.map(item=>`
+                  <div style="margin-top:7px">
+                    <div>${escapeHtml(item.condition)}</div>
+                    <div style="margin-top:3px;font-weight:700">未達卓：${item.count}卓</div>
+                    <div style="margin-top:2px">該当卓：${item.tables.map(t=>`${t}卓`).join('・')}</div>
+                  </div>
+                `).join('')}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    } else {
+      const hasConditions = tableConditions.length || avoidLabelPairs.length || fixedParticipantConditions.length;
+      conditionHtml = `
+        <div class="status-box status-box-wide status-ok">
+          <div class="status-box-title">条件</div>
+          <div class="status-box-value"><b>達成</b>${hasConditions ? '：すべての条件を満たしています。' : '：設定条件はありません。'}</div>
+        </div>`;
+    }
+
+    statusEl.innerHTML = `
+      <div class="status-grid">
+        <div class="status-box">
+          <div class="status-box-title">同卓重複</div>
+          <div class="status-box-value">${repeatText}</div>
+        </div>
+        <div class="status-box">
+          <div class="status-box-title">待機</div>
+          <div class="status-box-value">${byeText}</div>
+          ${byeDetailHtml}
+        </div>
+        ${conditionHtml}
+      </div>`;
+    renderPairHistory();
+  }
+
+
+  function enableLockControls() {
+    resultsEl.querySelectorAll('.player').forEach(el=>{
+      let downX=0, downY=0, moved=false;
+
+      el.addEventListener('mousedown', e=>{
+        downX=e.clientX;
+        downY=e.clientY;
+        moved=false;
+      });
+
+      el.addEventListener('mousemove', e=>{
+        if (Math.abs(e.clientX-downX)>5 || Math.abs(e.clientY-downY)>5) moved=true;
+      });
+
+      el.addEventListener('click', e=>{
+        if (moved) return;
+        const r=Number(el.dataset.round);
+        const t=Number(el.dataset.table);
+        const p=Number(el.dataset.player);
+        const player=window.lastSchedule.schedule[r].tables[t][p];
+        pushUndoState();
+        toggleSeatLock(r,t,p,player);
+        render(cleanNames(), Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+      });
+    });
+
+    resultsEl.querySelectorAll('[data-rebuild-round]').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const r=Number(btn.dataset.rebuildRound);
+        pushUndoState();
+        rebuildRoundUnlocked(r);
+        render(cleanNames(), Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+      });
+    });
+  }
+
+  function enableDragSwap() {
+    let dragEl = null;
+
+    resultsEl.querySelectorAll('.player').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        const r=Number(el.dataset.round), t=Number(el.dataset.table), p=Number(el.dataset.player);
+        if (isSeatLocked(r,t,p)) {
+          e.preventDefault();
+          return;
+        }
+        dragEl = el;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'swap');
+      });
+
+      el.addEventListener('dragend', () => {
+        if (dragEl) dragEl.classList.remove('dragging');
+        resultsEl.querySelectorAll('.player.drop-target').forEach(x => x.classList.remove('drop-target'));
+        dragEl = null;
+      });
+
+      el.addEventListener('dragover', e => {
+        if (!dragEl || dragEl === el) return;
+        const rr=Number(el.dataset.round), tt=Number(el.dataset.table), pp=Number(el.dataset.player);
+        if (isSeatLocked(rr,tt,pp)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        resultsEl.querySelectorAll('.player.drop-target').forEach(x => x.classList.remove('drop-target'));
+        el.classList.add('drop-target');
+      });
+
+      el.addEventListener('dragleave', () => {
+        el.classList.remove('drop-target');
+      });
+
+      el.addEventListener('drop', e => {
+        e.preventDefault();
+        el.classList.remove('drop-target');
+        if (!dragEl || dragEl === el || !window.lastSchedule) return;
+
+        const r1 = Number(dragEl.dataset.round);
+        const t1 = Number(dragEl.dataset.table);
+        const p1 = Number(dragEl.dataset.player);
+        const r2 = Number(el.dataset.round);
+        const t2 = Number(el.dataset.table);
+        const p2 = Number(el.dataset.player);
+
+        if (r1 !== r2) {
+          statusEl.className='status warning';
+          statusEl.textContent='入れ替えは同じ回戦内で行ってください。';
+          return;
+        }
+
+        pushUndoState();
+        const a = window.lastSchedule.schedule[r1].tables[t1][p1];
+        const b = window.lastSchedule.schedule[r2].tables[t2][p2];
+        window.lastSchedule.schedule[r1].tables[t1][p1] = b;
+        window.lastSchedule.schedule[r2].tables[t2][p2] = a;
+
+        // Rebuild pair counts after manual changes.
+        const pairCounts = new Map();
+        for (const round of window.lastSchedule.schedule) {
+          for (const g of round.tables) {
+            for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++) {
+              const k = key(g[i],g[j]);
+              pairCounts.set(k,(pairCounts.get(k)||0)+1);
+            }
+          }
+        }
+        window.lastSchedule.pairCounts = pairCounts;
+
+        const players = cleanNames();
+        render(players, Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+        statusEl.insertAdjacentHTML('afterbegin',
+          '<div class="status-box status-ok" style="margin-bottom:8px"><div class="status-box-value">ドラッグ操作で席を入れ替えました。</div></div>'
+        );
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function textResult() {
+    if (!window.lastSchedule) return '';
+    const {schedule}=window.lastSchedule;
+
+    function personText(name) {
+      const labels = personLabels.get(name) || [];
+      if (!labels.length) return name;
+      const labelText = labels.map(i => getLabelDisplayName(i)).join('・');
+      return `${name}【${labelText}】`;
+    }
+
+    const lines=[];
+    schedule.forEach((round,ri)=>{
+      lines.push(`【第${ri+1}回戦】`);
+      round.tables.forEach((g,ti)=>lines.push(`${ti+1}卓：${g.map(personText).join(' / ')}`));
+      if(round.byes.length) lines.push(`待機：${round.byes.map(personText).join(' / ')}`);
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+
+  function tableTextResult() {
+    if (!window.lastSchedule) return '';
+    const {schedule}=window.lastSchedule;
+    const rows = [['回戦','卓','位置','参加者','ラベル']];
+
+    const seatNamesCopy = ['左上','右上','左下','右下'];
+
+    function labelsText(name) {
+      const labels = personLabels.get(name) || [];
+      return labels.map(i=>getLabelDisplayName(i)).join(' / ');
+    }
+
+    schedule.forEach((round,ri)=>{
+      round.tables.forEach((g,ti)=>{
+        g.forEach((name,si)=>{
+          rows.push([
+            `第${ri+1}回戦`,
+            `${ti+1}卓`,
+            seatNamesCopy[si] || '',
+            name,
+            labelsText(name)
+          ]);
+        });
+      });
+      round.byes.forEach(name=>{
+        rows.push([
+          `第${ri+1}回戦`,
+          '待機',
+          '',
+          name,
+          labelsText(name)
+        ]);
+      });
+    });
+
+    return rows.map(r=>r.join('\t')).join('\n');
+  }
+
+  function csvResult() {
+    if (!window.lastSchedule) return '';
+    const {schedule}=window.lastSchedule;
+    const rows = [['回戦','卓','位置','参加者','ラベル']];
+    const seatNamesCopy = ['左上','右上','左下','右下'];
+
+    function labelsText(name) {
+      const labels = personLabels.get(name) || [];
+      return labels.map(i=>getLabelDisplayName(i)).join(' / ');
+    }
+
+    schedule.forEach((round,ri)=>{
+      round.tables.forEach((g,ti)=>{
+        g.forEach((name,si)=>{
+          rows.push([
+            `第${ri+1}回戦`,
+            `${ti+1}卓`,
+            seatNamesCopy[si] || '',
+            name,
+            labelsText(name)
+          ]);
+        });
+      });
+      round.byes.forEach(name=>{
+        rows.push([
+          `第${ri+1}回戦`,
+          '待機',
+          '',
+          name,
+          labelsText(name)
+        ]);
+      });
+    });
+
+    const esc = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+    return rows.map(r=>r.map(esc).join(',')).join('\r\n');
+  }
+
+  function downloadTextFile(filename, content, mime='text/plain;charset=utf-8') {
+    const blob = new Blob(['\uFEFF', content], {type:mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }
+
+  function showActionNotice(message) {
+    statusEl.querySelectorAll('.action-notice').forEach(el => el.remove());
+    statusEl.insertAdjacentHTML(
+      'afterbegin',
+      `<div class="status-box status-ok action-notice" style="margin-bottom:8px"><div class="status-box-value">${escapeHtml(message)}</div></div>`
+    );
+  }
+
+  async function copyPlainText(text) {
+    // Primary path: Clipboard API, explicitly as plain text.
+    if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
+      try {
+        const blob = new Blob([text], {type:'text/plain'});
+        const item = new ClipboardItem({'text/plain': blob});
+        await navigator.clipboard.write([item]);
+        return true;
+      } catch (e) {}
+    }
+
+    // Secondary path: writeText.
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch (e) {}
+    }
+
+    // Fallback for local files / restrictive browsers.
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly','');
+      ta.style.position='fixed';
+      ta.style.left='-9999px';
+      ta.style.top='0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return !!ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  $('fill').addEventListener('click',()=>{
+    const n=Math.max(4,Math.min(100,parseInt(countEl.value)||16));
+    let rows = [...nameRowsEl.querySelectorAll('.name-row')];
+
+    // 指定人数より行が少ない場合だけ追加する。
+    while (rows.length < n) {
+      addNameRow();
+      rows = [...nameRowsEl.querySelectorAll('.name-row')];
+    }
+
+    // 現在存在する全行を対象に、空欄だけ仮名で埋める。
+    const used = new Set(
+      rows.map(r => r.querySelector('.name-input').value.trim()).filter(Boolean)
+    );
+    let nextNo = 1;
+
+    function nextDummyName() {
+      let candidate;
+      do {
+        candidate = `参加者${String(nextNo++).padStart(2,'0')}`;
+      } while (used.has(candidate));
+      used.add(candidate);
+      return candidate;
+    }
+
+    rows.forEach(row => {
+      const input = row.querySelector('.name-input');
+      if (!input.value.trim()) {
+        input.value = nextDummyName();
+      }
+    });
+
+    renumberRows();
+    syncPersonLabels();
+    updateInputRowBackgrounds();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+  });
+
+  $('generate').addEventListener('click',()=>{
+    const players=cleanNames();
+    const rounds=Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+    if(players.length<4){
+      alert('参加者を4人以上入力してください。');
+      return;
+    }
+    if(players.length>100){
+      alert('参加者は100人までです。');
+      return;
+    }
+    const fixedError = fixedConflictMessage(players);
+    if (fixedError) {
+      showConditionWarning(fixedError);
+      return;
+    }
+    statusEl.textContent='卓組を計算しています…';
+    setTimeout(()=>{
+      if (window.lastSchedule) pushUndoState();
+      const data=generateSchedule(players,rounds);
+      lockedSeats.clear();
+      window.lastSchedule=data;
+      render(players,rounds,data);
+    },10);
+  });
+
+  $('copy').addEventListener('click',async()=>{
+    const t=textResult();
+    if(!t){ alert('先に卓組を作成してください。'); return; }
+    const ok = await copyPlainText(t);
+    if (ok) {
+      showActionNotice('卓組結果をプレーンテキストでコピーしました。');
+    } else {
+      alert('コピーできませんでした。ブラウザのクリップボード権限をご確認ください。');
+    }
+  });
+
+
+  $('copyTable').addEventListener('click',async()=>{
+    const t=tableTextResult();
+    if(!t){ alert('先に卓組を作成してください。'); return; }
+    const ok = await copyPlainText(t);
+    if (ok) {
+      showActionNotice('表形式でコピーしました。ExcelやGoogleスプレッドシートにそのまま貼り付けられます。');
+    } else {
+      alert('コピーできませんでした。ブラウザのクリップボード権限をご確認ください。');
+    }
+  });
+
+  $('downloadCsv').addEventListener('click',()=>{
+    const csv=csvResult();
+    if(!csv){ alert('先に卓組を作成してください。'); return; }
+    downloadTextFile('卓組.csv', csv, 'text/csv;charset=utf-8');
+    showActionNotice('CSVを出力しました。');
+  });
+
+  $('clear').addEventListener('click',()=>{
+    if (window.lastSchedule || cleanNames().length) pushUndoState();
+    setNameRows([]);
+    summaryEl.innerHTML='';
+    resultsEl.className='empty';
+    resultsEl.textContent='まだ卓組はありません。';
+    pairHistoryListEl.innerHTML='<div class="pair-empty">卓組を作成すると表示されます。</div>';
+    statusEl.className='status';
+    statusEl.textContent='参加者名を入力して「卓組を作成」を押してください。';
+    window.lastSchedule=null;
+    lockedSeats.clear();
+    personLabels.clear();
+  });
+
+  const nameGrid = document.querySelector('.name-grid');
+  const nameResizer = $('nameResizer');
+  let resizingNameCol = false;
+  let resizeStartX = 0;
+  let resizeStartWidth = 260;
+
+  nameResizer.addEventListener('mousedown', e => {
+    resizingNameCol = true;
+    resizeStartX = e.clientX;
+    const current = getComputedStyle(nameGrid).getPropertyValue('--name-col').trim();
+    resizeStartWidth = parseInt(current) || 260;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!resizingNameCol) return;
+    const next = Math.max(180, Math.min(520, resizeStartWidth + (e.clientX - resizeStartX)));
+    nameGrid.style.setProperty('--name-col', next + 'px');
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!resizingNameCol) return;
+    resizingNameCol = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+
+  $('clearLocks').addEventListener('click',()=>{
+    if (window.lastSchedule || lockedSeats.size) pushUndoState();
+    lockedSeats.clear();
+    if (window.lastSchedule) {
+      render(cleanNames(), Math.max(1,Math.min(10,parseInt(roundsEl.value)||1)), window.lastSchedule);
+      statusEl.insertAdjacentHTML('afterbegin','<div class="status-box status-ok" style="margin-bottom:8px"><div class="status-box-value">すべての席ロックを解除しました。</div></div>');
+    }
+  });
+
+  $('saveState').addEventListener('click',()=>{
+    downloadJsonState();
+    showActionNotice('卓組データを保存しました。');
+  });
+
+  $('loadState').addEventListener('click',()=>{
+    $('loadStateFile').click();
+  });
+
+  $('loadStateFile').addEventListener('change', async e=>{
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try{
+      const text = await file.text();
+      const state = JSON.parse(text);
+      pushUndoState();
+      restoreState(state);
+      showActionNotice('卓組データを読み込みました。');
+    }catch(err){
+      showActionNotice('保存データを読み込めませんでした。');
+    }finally{
+      e.target.value = '';
+    }
+  });
+
+  $('undoBtn').addEventListener('click', doUndo);
+
+  $('printView').addEventListener('click',()=>{
+    if (!window.lastSchedule) {
+      alert('先に卓組を作成してください。');
+      return;
+    }
+    buildPrintSheet();
+    window.print();
+  });
+
+  bulkLabelTriggerEl.addEventListener('click',e=>{
+    e.stopPropagation();
+    bulkLabelPopoverEl.classList.toggle('open');
+  });
+
+  bulkLabelPopoverEl.addEventListener('click',e=>e.stopPropagation());
+
+  bulkAddSelectedLabelEl.addEventListener('click',()=>{
+    applyBulkLabel(selectedBulkLabel, 'add');
+  });
+
+  bulkRemoveSelectedLabelEl.addEventListener('click',()=>{
+    applyBulkLabel(selectedBulkLabel, 'remove');
+  });
+
+  $('bulkSelectAll').addEventListener('click',()=>{
+    nameRowsEl.querySelectorAll('.row-select').forEach(cb=>cb.checked=true);
+    updateBulkSelectionUI();
+  });
+
+  $('bulkClearSelection').addEventListener('click',()=>{
+    nameRowsEl.querySelectorAll('.row-select').forEach(cb=>cb.checked=false);
+    updateBulkSelectionUI();
+  });
+
+  selectAllRowsEl.addEventListener('change',()=>{
+    nameRowsEl.querySelectorAll('.row-select').forEach(cb=>cb.checked=selectAllRowsEl.checked);
+    updateBulkSelectionUI();
+  });
+
+  $('helpBtn').addEventListener('click',()=>{
+    const panel = $('helpPanel');
+    panel.classList.toggle('open');
+  });
+
+  $('helpClose').addEventListener('click',()=>{
+    $('helpPanel').classList.remove('open');
+  });
+
+  $('rebuildUnlocked').addEventListener('click', rebuildAllUnlocked);
+
+  function updateRowTotalPreviews() {
+    const current = nameRowsEl.querySelectorAll('.name-row').length;
+    const addCount = Math.max(1, Math.min(100, parseInt(addRowCountEl.value)||1));
+    const delCount = Math.max(1, Math.min(100, parseInt(deleteRowCountEl.value)||1));
+
+    const addTotal = Math.min(100, current + addCount);
+    const deleteTotal = Math.max(1, current - delCount);
+
+    addRowTotalEl.textContent = `→ 合計${addTotal}行`;
+    deleteRowTotalEl.textContent = `→ 合計${deleteTotal}行`;
+  }
+
+  roundsEl.addEventListener('input', refreshParticipationRoundVisibility);
+  roundsEl.addEventListener('change', refreshParticipationRoundVisibility);
+
+  addRowCountEl.addEventListener('input', updateRowTotalPreviews);
+  deleteRowCountEl.addEventListener('input', updateRowTotalPreviews);
+
+  $('addRow').addEventListener('click',()=>{
+    const count = Math.max(1, Math.min(100, parseInt(addRowCountEl.value)||1));
+    const current = nameRowsEl.querySelectorAll('.name-row').length;
+    const canAdd = Math.max(0, 100-current);
+    const actual = Math.min(count, canAdd);
+    for (let i=0;i<actual;i++) addNameRow();
+    renumberRows();
+    syncPersonLabels();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+    renderFixedConditions();
+    updateRowTotalPreviews();
+    refreshParticipationRoundVisibility();
+  });
+
+  $('deleteRows').addEventListener('click',()=>{
+    const count = Math.max(1, Math.min(100, parseInt(deleteRowCountEl.value)||1));
+    const rows = [...nameRowsEl.querySelectorAll('.name-row')];
+    const removable = Math.min(count, Math.max(0, rows.length-1));
+    for (let i=0;i<removable;i++) {
+      const row = nameRowsEl.lastElementChild;
+      if (row) row.remove();
+    }
+    renumberRows();
+    syncPersonLabels();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+  });
+
+  conditionLabelEl.addEventListener('change', ()=>{ clearConditionWarning(); updateConditionPreviews(); });
+  conditionMinEl.addEventListener('input', ()=>{ clearConditionWarning(); updateConditionPreviews(); });
+  avoidLabelAEl.addEventListener('change', ()=>{ clearConditionWarning(); updateConditionPreviews(); });
+  avoidLabelBEl.addEventListener('change', ()=>{ clearConditionWarning(); updateConditionPreviews(); });
+
+  $('addCondition').addEventListener('click',()=>{
+    clearConditionWarning();
+    const label = Number(conditionLabelEl.value);
+    const min = Math.max(1,Math.min(4,parseInt(conditionMinEl.value)||1));
+    const error = validateTableCondition(label, min);
+    if (error) {
+      showConditionWarning(error);
+      return;
+    }
+    const existing = tableConditions.find(c=>c.label===label);
+    if (existing) existing.min = min;
+    else tableConditions.push({label,min});
+    renderConditions();
+  });
+
+  $('addAvoid').addEventListener('click',()=>{
+    clearConditionWarning();
+    const a = Number(avoidLabelAEl.value);
+    const b = Number(avoidLabelBEl.value);
+    const error = validateAvoidCondition(a, b);
+    if (error) {
+      showConditionWarning(error);
+      return;
+    }
+    const exists = avoidLabelPairs.some(c => (c.a===a && c.b===b) || (c.a===b && c.b===a));
+    if (!exists) avoidLabelPairs.push({a,b});
+    renderAvoidConditions();
+  });
+
+  fixedParticipantModeEl.addEventListener('change', ()=>{ clearConditionWarning(); updateFixedPreview(); });
+  fixedParticipantEl.addEventListener('change', ()=>{ clearConditionWarning(); updateFixedPreview(); });
+  fixedTableEl.addEventListener('input', ()=>{ clearConditionWarning(); updateFixedPreview(); });
+  fixedSeatEl.addEventListener('change', ()=>{ clearConditionWarning(); updateFixedPreview(); });
+
+  $('addFixed').addEventListener('click',()=>{
+    clearConditionWarning();
+    const resolved = resolveSelectedParticipant();
+    if (!resolved) {
+      showConditionWarning('参加者を選択してください。');
+      return;
+    }
+
+    const table = Math.max(1, parseInt(fixedTableEl.value)||1) - 1;
+    const seat = Number(fixedSeatEl.value||0);
+
+    const sameTarget = c =>
+      (resolved.mode === 'no' && c.mode === 'no' && c.no === resolved.no) ||
+      (resolved.mode === 'name' && c.mode === 'name' && c.name === resolved.name) ||
+      (resolved.name && resolveFixedConditionName(c) === resolved.name);
+
+    const exact = fixedParticipantConditions.find(
+      c => sameTarget(c) && c.table===table && c.seat===seat
+    );
+    if (exact) {
+      showConditionWarning('同じ固定条件がすでに追加されています。');
+      return;
+    }
+
+    const seatConflict = fixedParticipantConditions.find(
+      c => c.table===table && c.seat===seat
+    );
+    if (seatConflict) {
+      showConditionWarning(`${table+1}卓 ${seatNames[seat]} には、すでに ${fixedConditionDisplayName(seatConflict)} が固定されています。`);
+      return;
+    }
+
+    const playerConflict = fixedParticipantConditions.find(c => sameTarget(c));
+    if (playerConflict) {
+      showConditionWarning(`${fixedConditionDisplayName(playerConflict)} はすでに ${playerConflict.table+1}卓 ${seatNames[playerConflict.seat]} に固定されています。変更する場合は、追加済み条件を削除してから追加してください。`);
+      return;
+    }
+
+    fixedParticipantConditions.push({
+      mode: resolved.mode,
+      no: resolved.mode === 'no' ? resolved.no : null,
+      name: resolved.mode === 'name' ? resolved.name : '',
+      table,
+      seat
+    });
+    renderFixedConditions();
+    updateFixedPreview();
+  });
+
+  renderLabelSettings();
+  renderConditions();
+  renderAvoidConditions();
+  renderFixedConditions();
+  nameRowsEl.innerHTML='';
+  for(let i=0;i<8;i++) addNameRow();
+  updateInputRowBackgrounds();
+  refreshFixedParticipantOptions();
+  updateFixedPreview();
+  updateRowTotalPreviews();
+})();
+</script>
+</body>
+</html>
