@@ -111,8 +111,13 @@
   .delete-toggle-floating{position:absolute;left:6px;top:6px;z-index:50;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:1px solid #94a3b8;border-radius:7px;background:#fff;color:#111827;font-size:15px;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.12)}
   .name-grid.delete-hidden .delete-cell .delete-row{visibility:hidden;pointer-events:none}
   .label-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
-  .label-settings-title{font-weight:700;margin-bottom:8px}
+  .label-settings-title{font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
   .condition-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
+  .section-toggle{width:28px;height:28px;padding:0;border:1px solid var(--line);border-radius:7px;background:#fff;font-weight:800;cursor:pointer}
+  .label-settings.collapsed #labelSettings{display:none !important}
+  .label-settings.collapsed .label-settings-title{margin-bottom:0}
+  .condition-settings.collapsed > :not(.condition-title:first-child){display:none !important}
+  .condition-settings > .condition-title:first-child{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .condition-warning{display:none;margin-top:10px;padding:9px 10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13px;line-height:1.5}
   .condition-warning.show{display:block}
   .condition-title{font-weight:700;margin-bottom:8px}
@@ -153,6 +158,15 @@
   .small{padding:8px 10px;font-size:13px}
   .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .export-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  .collapsible-section{border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:10px;overflow:visible}
+  .collapsible-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:#f8fafc}
+  .collapsible-head h3,.collapsible-head h2{margin:0;font-size:14px}
+  .collapse-toggle{width:28px;height:28px;padding:0;border:1px solid var(--line);border-radius:7px;background:#fff;font-weight:800;cursor:pointer}
+  .collapsible-body{padding:10px 12px;border-top:1px solid var(--line)}
+  .collapsible-section.collapsed .collapsible-body{display:none}
+  .output-group{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px}
+  .output-group-title{font-size:13px;font-weight:800;color:#334155;margin-bottom:8px}
+  .output-group .export-row{margin-top:0;padding-top:0;border-top:0}
   .export-label{font-size:13px;font-weight:800;color:#4b5563;margin-right:2px}
   .export-row button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
   .utility-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -271,6 +285,7 @@
     <p>1人に複数ラベルを付けることができます。参加者行ではラベル色を最大2個まで表示し、3個以上は「＋N」にまとめます。「＋」または「＋N」を押すと7色パレットが開きます。複数人へまとめて付ける場合は、左端のチェックで対象者を選び、「一括ラベル」をクリックします。開いたパレットで色を選び、そのまま同じポップアップ内の「追加」または「解除」を押します。「全選択」「選択解除」も使えます。「↶ Undo」は参加者名欄専用で、名前・ラベル・参加回戦・行追加削除などの直前操作を戻します。複数ラベルの場合、参加者名の背景色は縦方向に分割表示されます。</p>
 
     <h3>3. 卓組条件を設定</h3>
+    <p>「ラベル名」と「卓組条件」は右端の＋／−で開閉できます。必要なときだけ開いて使えます。</p>
     <p>条件は参加者名を入力する前でも追加できます。</p>
     <ul>
       <li>「ラベル1（青）を各卓に2人以上」のように、指定ラベルを各卓に最低何人入れるか設定できます。</li>
@@ -358,12 +373,12 @@
       </div>
 
       <div class="label-settings">
-        <div class="label-settings-title">ラベル名</div>
+        <div class="label-settings-title"><span>ラベル名</span><button type="button" class="section-toggle" id="toggleLabelSettings" aria-label="ラベル名を閉じる">−</button></div>
         <div id="labelSettings"></div>
       </div>
 
       <div class="condition-settings">
-        <div class="condition-title">卓組条件</div>
+        <div class="condition-title"><span>卓組条件</span><button type="button" class="section-toggle" id="toggleConditionSettings" aria-label="卓組条件を閉じる">−</button></div>
         <div class="condition-builder" style="grid-template-columns:1fr 90px">
           <select id="conditionLabel"></select>
           <input id="conditionMin" type="number" min="1" max="4" value="1">
@@ -433,12 +448,14 @@
         <button class="secondary" id="clear">クリア</button>
       </div>
 
-      <div class="export-row">
-        <span class="export-label">コピー・出力</span>
-        <button class="secondary" id="copy">📋 テキストコピー</button>
-        <button class="secondary" id="copyTable">▦ 表形式コピー</button>
-        <button class="secondary" id="downloadCsv">⇩ CSV出力</button>
-        <button class="secondary" id="printView">🖨 印刷用表示</button>
+      <div class="output-group">
+        <div class="output-group-title">コピー・出力</div>
+        <div class="export-row">
+          <button class="secondary" id="copy">📋 テキストコピー</button>
+          <button class="secondary" id="copyTable">▦ 表形式コピー</button>
+          <button class="secondary" id="downloadCsv">⇩ CSV出力</button>
+          <button class="secondary" id="printView">🖨 印刷用表示</button>
+        </div>
       </div>
 
       <div class="utility-row">
@@ -2593,6 +2610,27 @@
 
     labelResizer.addEventListener('pointerup', finishLabelResize);
     labelResizer.addEventListener('pointercancel', finishLabelResize);
+  }
+
+  const labelSettingsSection = document.querySelector('.label-settings');
+  const conditionSettingsSection = document.querySelector('.condition-settings');
+  const toggleLabelSettingsBtn = $('toggleLabelSettings');
+  const toggleConditionSettingsBtn = $('toggleConditionSettings');
+
+  if (toggleLabelSettingsBtn && labelSettingsSection) {
+    toggleLabelSettingsBtn.addEventListener('click',()=>{
+      const collapsed = labelSettingsSection.classList.toggle('collapsed');
+      toggleLabelSettingsBtn.textContent = collapsed ? '＋' : '−';
+      toggleLabelSettingsBtn.setAttribute('aria-label', collapsed ? 'ラベル名を開く' : 'ラベル名を閉じる');
+    });
+  }
+
+  if (toggleConditionSettingsBtn && conditionSettingsSection) {
+    toggleConditionSettingsBtn.addEventListener('click',()=>{
+      const collapsed = conditionSettingsSection.classList.toggle('collapsed');
+      toggleConditionSettingsBtn.textContent = collapsed ? '＋' : '−';
+      toggleConditionSettingsBtn.setAttribute('aria-label', collapsed ? '卓組条件を開く' : '卓組条件を閉じる');
+    });
   }
 
   $('participantUndoBtn').addEventListener('click', undoParticipantEdit);
