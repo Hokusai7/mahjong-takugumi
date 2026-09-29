@@ -32,20 +32,19 @@
   .grid{display:grid;grid-template-columns:minmax(460px,560px) 1fr;gap:18px;align-items:start}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
   label{display:block;font-weight:700;margin:0 0 6px}
-  .name-grid{border:1px solid var(--line);border-radius:10px;background:#fff;overflow:visible}
-  .name-grid{--name-col:260px;position:relative}
-  .name-grid-head,.name-row{display:grid;grid-template-columns:34px 42px minmax(150px,var(--name-col)) minmax(105px,145px) minmax(250px,1fr) 42px;align-items:center;width:100%}
-  .round-participation{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0;padding-right:4px;padding-left:8px}
-  .round-mini{display:inline-flex;align-items:center;gap:2px;font-size:11px;white-space:nowrap}
+  .name-grid{border:1px solid var(--line);border-radius:10px;background:#fff;overflow-x:auto;overflow-y:visible;position:relative}
+  .name-grid{--name-col:190px;--label-col:135px;--round-col:420px;position:relative}
+  .name-grid-head,.name-row{display:grid;grid-template-columns:42px 38px 42px minmax(145px,var(--name-col)) minmax(100px,var(--label-col)) minmax(300px,var(--round-col));align-items:center;min-width:940px;width:100%}
+  .round-participation{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;min-width:max-content;padding-right:4px;padding-left:10px;white-space:nowrap;overflow:visible}
+  .round-mini{display:inline-flex;align-items:center;gap:2px;font-size:11px;white-space:nowrap;flex:0 0 auto}
   .round-mini input{margin:0}
-  .round-quick{display:inline-flex;gap:4px;margin-right:2px}
+  .round-quick{display:inline-flex;gap:4px;margin-right:4px;flex:0 0 auto}
   .round-quick button{padding:4px 6px;font-size:11px;line-height:1.15;white-space:nowrap}
   @media (max-width:900px){
-    .name-grid-head,.name-row{grid-template-columns:30px 38px minmax(130px,1fr) 125px minmax(220px,1.4fr) 38px}
-    .round-quick{flex-basis:100%}
+    .name-grid-head,.name-row{grid-template-columns:38px 34px 38px minmax(125px,var(--name-col)) minmax(100px,var(--label-col)) minmax(260px,var(--round-col))}
   }
   @media (max-width:680px){
-    .name-grid-head,.name-row{grid-template-columns:28px 34px minmax(120px,1fr) 110px minmax(190px,1.5fr) 34px}
+    .name-grid-head,.name-row{grid-template-columns:36px 32px 34px minmax(115px,var(--name-col)) minmax(90px,var(--label-col)) minmax(235px,var(--round-col))}
     .round-mini{font-size:10px}
     .round-quick button{padding:3px 5px;font-size:10px}
   }
@@ -56,6 +55,18 @@
   .name-resizer:hover::after{background:#7c8aa5}
   .name-grid-head>div,.name-row>div{padding:7px 8px}
   .name-rows{max-height:420px;overflow-y:auto;overflow-x:visible}
+  .name-rows.show-all{max-height:none;overflow-y:visible;overflow-x:visible}
+  .participant-title-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;white-space:nowrap;overflow:visible}
+  .participant-title-row label{margin:0}
+  .participant-toggle-title{padding:4px 7px;font-size:12px;line-height:1.2;flex:0 0 auto}
+  .name-col-head{display:flex;align-items:center;gap:4px;position:relative;min-width:0}
+  .name-resizer{position:absolute;right:-4px;top:0;bottom:0;width:10px;cursor:col-resize;z-index:10}
+  .name-resizer::after{content:"";position:absolute;left:4px;top:20%;bottom:20%;width:2px;border-radius:2px;background:#cbd5e1}
+  .name-resizer:hover::after,.name-resizer.dragging::after{background:#64748b}
+  .label-col-head{display:flex;align-items:center;position:relative;min-width:0}
+  .label-resizer{position:absolute;right:-4px;top:0;bottom:0;width:10px;cursor:col-resize;z-index:10}
+  .label-resizer::after{content:"";position:absolute;left:4px;top:20%;bottom:20%;width:2px;border-radius:2px;background:#cbd5e1}
+  .label-resizer:hover::after,.label-resizer.dragging::after{background:#64748b}
   .name-row{border-bottom:1px solid #eef1f6}
   .name-row:last-child{border-bottom:0}
   .name-no{text-align:center;color:var(--muted);font-size:12px}
@@ -77,15 +88,28 @@
   .bulk-label-picker{position:relative}
   .bulk-label-trigger{display:inline-flex;align-items:center;gap:7px}
   .bulk-label-swatch{display:inline-block;width:16px;height:16px;border-radius:5px;border:1px solid rgba(0,0,0,.2);background:#bfdbfe}
-  .bulk-label-popover{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:999;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(15,23,42,.16);gap:7px;flex-wrap:wrap;width:182px}
+  .bulk-label-popover{display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:999;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(15,23,42,.16);gap:7px;flex-wrap:wrap;width:198px}
   .bulk-label-popover.open{display:flex}
   .bulk-label-popover .bulk-color-btn{display:inline-block;width:30px;height:30px;min-width:30px;min-height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.18);padding:0;appearance:none;-webkit-appearance:none}
+  .bulk-label-popover-actions{display:flex;gap:6px;width:100%;padding-top:4px;border-top:1px solid var(--line)}
+  .bulk-label-popover-actions button{flex:1;padding:6px 8px;font-size:12px;white-space:nowrap}
   .bulk-color-btn{width:26px;height:26px;border-radius:8px;border:1px solid rgba(0,0,0,.15);padding:0}
   .bulk-color-btn.selected{outline:3px solid #111827;outline-offset:2px}
   .bulk-divider{width:1px;height:24px;background:var(--line);margin:0 1px;flex:0 0 auto}
   .bulk-label-bar > button,.bulk-label-picker{flex:0 0 auto}
   .bulk-label-bar > button{padding-left:8px;padding-right:8px}
-  .select-cell{text-align:center}
+  .bulk-label-bar-inline{margin:0 0 0 12px;padding:0;border:0;background:transparent;gap:6px;flex:0 1 auto;min-width:0}
+  .bulk-label-bar-inline .bulk-label-count{font-size:12px;margin-right:2px}
+  .bulk-label-bar-inline > button{padding-left:7px;padding-right:7px;font-size:12px}
+  .bulk-label-bar-inline .bulk-label-trigger{padding-left:8px;padding-right:8px;font-size:12px;margin-left:2px}
+  .select-cell{text-align:center;padding:4px 6px;cursor:pointer}
+  .select-cell input[type="checkbox"],
+  .row-select,
+  #selectAllRows{width:18px;height:18px;cursor:pointer}
+  .delete-cell{text-align:center;padding-right:4px}
+  .delete-head{min-width:28px}
+  .delete-toggle-floating{position:absolute;left:6px;top:6px;z-index:50;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:1px solid #94a3b8;border-radius:7px;background:#fff;color:#111827;font-size:15px;font-weight:800;line-height:1;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+  .name-grid.delete-hidden .delete-cell .delete-row{visibility:hidden;pointer-events:none}
   .label-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
   .label-settings-title{font-weight:700;margin-bottom:8px}
   .condition-settings{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:10px}
@@ -236,14 +260,15 @@
     <h2>使い方</h2>
 
     <h3>1. 参加者を入力</h3>
-    <p>参加者名は1人1行で入力します。複数行をまとめて貼り付けることもできます。</p>
+    <p>参加者名は1人1行で入力します。複数行をまとめて貼り付けることもできます。参加者名列の右端、および「ラベル色」と「参加回戦」の境界を左右にドラッグすると、列の横幅を調整できます。</p>
     <p>「○行追加」「○行削除」で行数をまとめて調整できます。削除は一番下の行から行われ、右側に操作後の合計行数が表示されます。</p>
     <p>「仮名を入れる」を押すと、現在ある空欄行に「参加者01」「参加者02」…と仮名を入れます。入力済みの名前は上書きしません。</p>
     <p>各参加者の「参加回戦」で出場する回戦を指定できます。「全参加」は全回戦ON、「全休」は全回戦OFFです。途中参加・途中退出・特定回戦だけの欠席も、回戦番号のチェックで設定できます。</p>
+    <p>参加者一覧は通常コンパクト表示です。「全員表示」を押すと高さ制限を解除して全参加者を一度に確認でき、「コンパクト表示」で元に戻せます。左端の削除欄は、×列上部の「«／»」マークで開閉できます。</p>
 
     <h3>2. ラベルを設定</h3>
     <p>7種類のラベルに自由な名前を付けられます。初期色はラベル1＝青、ラベル2＝黄、ラベル3＝緑、ラベル4＝赤、ラベル5＝紫、ラベル6＝橙、ラベル7＝水色です。</p>
-    <p>1人に複数ラベルを付けることができます。参加者行ではラベル色を最大2個まで表示し、3個以上は「＋N」にまとめます。「＋」または「＋N」を押すと7色パレットが開きます。複数人へまとめて付ける場合は、左端のチェックで対象者を選び、「一括ラベル」をクリックして色を選び、「追加」または「解除」を押します。「全選択」「選択解除」も使えます。複数ラベルの場合、参加者名の背景色は縦方向に分割表示されます。</p>
+    <p>1人に複数ラベルを付けることができます。参加者行ではラベル色を最大2個まで表示し、3個以上は「＋N」にまとめます。「＋」または「＋N」を押すと7色パレットが開きます。複数人へまとめて付ける場合は、左端のチェックで対象者を選び、「一括ラベル」をクリックします。開いたパレットで色を選び、そのまま同じポップアップ内の「追加」または「解除」を押します。「全選択」「選択解除」も使えます。「↶ Undo」は参加者名欄専用で、名前・ラベル・参加回戦・行追加削除などの直前操作を戻します。複数ラベルの場合、参加者名の背景色は縦方向に分割表示されます。</p>
 
     <h3>3. 卓組条件を設定</h3>
     <p>条件は参加者名を入力する前でも追加できます。</p>
@@ -294,12 +319,10 @@
 
   <div class="grid">
     <section class="card">
-      <label>参加者名（1行1人）</label>
-      <div class="name-grid">
-        <div class="name-grid-head">
-          <div class="select-cell"><input id="selectAllRows" type="checkbox" title="全選択"></div><div>No.</div><div class="name-col-head">参加者名<div id="nameResizer" class="name-resizer" title="ドラッグして列幅を変更"></div></div><div>ラベル色</div><div>参加回戦</div><div></div>
-        </div>
-        <div class="bulk-label-bar">
+      <div class="participant-title-row">
+        <label>参加者名</label>
+        <button type="button" class="secondary participant-toggle-title" id="toggleAllParticipants">全員表示</button>
+        <div class="bulk-label-bar bulk-label-bar-inline">
           <span class="bulk-label-count" id="bulkLabelCount">選択中 0人</span>
           <button type="button" class="secondary" id="bulkSelectAll">全選択</button>
           <button type="button" class="secondary" id="bulkClearSelection">選択解除</button>
@@ -311,8 +334,13 @@
             </button>
             <div id="bulkLabelPopover" class="bulk-label-popover"></div>
           </div>
-          <button type="button" class="secondary" id="bulkAddSelectedLabel">＋ 追加</button>
-          <button type="button" class="secondary" id="bulkRemoveSelectedLabel">− 解除</button>
+          <button type="button" class="secondary" id="participantUndoBtn">↶ Undo</button>
+        </div>
+      </div>
+      <div class="name-grid">
+        <button type="button" class="delete-toggle-floating" id="toggleDeleteColumn" title="削除欄を閉じる" aria-label="削除欄を閉じる">«</button>
+        <div class="name-grid-head">
+          <div></div><div class="select-cell"><input id="selectAllRows" type="checkbox" title="全選択"></div><div>No.</div><div class="name-col-head"><span>参加者名</span><div id="nameResizer" class="name-resizer" title="ドラッグして列幅を変更"></div></div><div class="label-col-head"><span>ラベル色</span><div id="labelResizer" class="label-resizer" title="ドラッグして列幅を変更"></div></div><div>参加回戦</div>
         </div>
         <div id="nameRows" class="name-rows"></div>
       </div>
@@ -481,6 +509,8 @@
   const bulkLabelPopoverEl = $('bulkLabelPopover');
   const bulkAddSelectedLabelEl = $('bulkAddSelectedLabel');
   const bulkRemoveSelectedLabelEl = $('bulkRemoveSelectedLabel');
+  const toggleAllParticipantsEl = $('toggleAllParticipants');
+  const toggleDeleteColumnEl = $('toggleDeleteColumn');
   let selectedBulkLabel = 0;
 
   document.addEventListener('click',()=>{
@@ -489,6 +519,8 @@
   });
   const undoStack = [];
   const MAX_UNDO = 30;
+  const participantUndoStack = [];
+  const MAX_PARTICIPANT_UNDO = 30;
   const labelColors = ['#bfdbfe', '#fde68a', '#bbf7d0', '#fecdd3', '#ddd6fe', '#fed7aa', '#cffafe'];
   const labelColorNames = ['青','黄','緑','赤','紫','橙','水'];
   const labelNames = ['ラベル1','ラベル2','ラベル3','ラベル4','ラベル5','ラベル6','ラベル7'];
@@ -877,6 +909,7 @@
     row.className = 'name-row';
     row.dataset.labels = JSON.stringify(labels);
     row.innerHTML = `
+      <div class="delete-cell"><button type="button" class="delete-row">×</button></div>
       <div class="select-cell"><input class="row-select" type="checkbox" title="一括編集の対象にする"></div>
       <div class="name-no"></div>
       <div><input class="name-input" type="text" value="${escapeAttr(name)}" placeholder="参加者名"></div>
@@ -887,10 +920,17 @@
           ${labelColors.map((c,i)=>`<button type="button" class="row-color ${labels.includes(i)?'active':''}" data-label="${i}" style="background:${c}" title="${escapeAttr(labelNames[i])}"></button>`).join('')}
         </div>
       </div>
-      <div class="round-participation"></div>
-      <div><button type="button" class="delete-row">×</button></div>`;
+      <div class="round-participation"></div>`;
 
     const rowSelect = row.querySelector('.row-select');
+    const selectCell = rowSelect.closest('.select-cell');
+    if (selectCell) {
+      selectCell.addEventListener('click', e=>{
+        if (e.target === rowSelect) return;
+        rowSelect.checked = !rowSelect.checked;
+        rowSelect.dispatchEvent(new Event('change', {bubbles:true}));
+      });
+    }
     rowSelect.addEventListener('change', updateBulkSelectionUI);
 
     const roundWrap = row.querySelector('.round-participation');
@@ -909,17 +949,28 @@
       lab.dataset.roundIndex = String(i);
       lab.style.display = i < visibleRounds ? 'inline-flex' : 'none';
       lab.innerHTML = `<input type="checkbox" ${flags[i] !== false ? 'checked' : ''}><span>${i+1}</span>`;
+      const cb = lab.querySelector('input');
+      cb.addEventListener('pointerdown',()=>pushParticipantUndoState());
       roundWrap.appendChild(lab);
     }
 
     quick.querySelector('.round-all').addEventListener('click',()=>{
+      pushParticipantUndoState();
       roundWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=true);
     });
     quick.querySelector('.round-none').addEventListener('click',()=>{
+      pushParticipantUndoState();
       roundWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
     });
 
     const input = row.querySelector('.name-input');
+    input.addEventListener('focus',()=>{
+      if (!input.dataset.undoCaptured) {
+        pushParticipantUndoState();
+        input.dataset.undoCaptured = '1';
+      }
+    });
+    input.addEventListener('blur',()=>{ delete input.dataset.undoCaptured; });
     input.addEventListener('input', () => {
       syncPersonLabels();
       refreshFixedParticipantOptions();
@@ -966,6 +1017,7 @@
 
     popover.querySelectorAll('.row-color').forEach(btn => {
       btn.addEventListener('click', () => {
+        pushParticipantUndoState();
         const idx = Number(btn.dataset.label);
         let labelsNow = [];
         try { labelsNow = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
@@ -990,6 +1042,7 @@
     refreshSelectedLabels();
 
     row.querySelector('.delete-row').addEventListener('click', () => {
+      pushParticipantUndoState();
       row.remove();
       if (!nameRowsEl.children.length) addNameRow();
       renumberRows();
@@ -1077,6 +1130,7 @@
       return;
     }
 
+    pushParticipantUndoState();
     rows.forEach(row=>{
       let labelsNow = [];
       try { labelsNow = JSON.parse(row.dataset.labels || '[]'); } catch(e) {}
@@ -1114,6 +1168,13 @@
     if (!bulkLabelPopoverEl || !bulkLabelSwatchEl) return;
 
     bulkLabelPopoverEl.innerHTML = '';
+
+    const colorWrap = document.createElement('div');
+    colorWrap.style.display = 'flex';
+    colorWrap.style.gap = '7px';
+    colorWrap.style.flexWrap = 'wrap';
+    colorWrap.style.width = '100%';
+
     labelColors.forEach((color,i)=>{
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -1126,14 +1187,33 @@
         e.stopPropagation();
         selectedBulkLabel = i;
         bulkLabelSwatchEl.style.background = labelColors[selectedBulkLabel];
-        bulkLabelPopoverEl.querySelectorAll('.bulk-color-btn').forEach(b=>{
+        colorWrap.querySelectorAll('.bulk-color-btn').forEach(b=>{
           b.classList.toggle('selected', Number(b.dataset.label)===selectedBulkLabel);
         });
-        bulkLabelPopoverEl.classList.remove('open');
       });
-      bulkLabelPopoverEl.appendChild(btn);
+      colorWrap.appendChild(btn);
     });
 
+    const actions = document.createElement('div');
+    actions.className = 'bulk-label-popover-actions';
+    actions.innerHTML = `
+      <button type="button" class="secondary" data-bulk-action="add">＋ 追加</button>
+      <button type="button" class="secondary" data-bulk-action="remove">− 解除</button>
+    `;
+
+    actions.querySelector('[data-bulk-action="add"]').addEventListener('click',e=>{
+      e.stopPropagation();
+      applyBulkLabel(selectedBulkLabel, 'add');
+      bulkLabelPopoverEl.classList.remove('open');
+    });
+    actions.querySelector('[data-bulk-action="remove"]').addEventListener('click',e=>{
+      e.stopPropagation();
+      applyBulkLabel(selectedBulkLabel, 'remove');
+      bulkLabelPopoverEl.classList.remove('open');
+    });
+
+    bulkLabelPopoverEl.appendChild(colorWrap);
+    bulkLabelPopoverEl.appendChild(actions);
     bulkLabelSwatchEl.style.background = labelColors[selectedBulkLabel] || '#bfdbfe';
   }
 
@@ -1251,6 +1331,57 @@
     return `background:linear-gradient(90deg, ${stops.join(',')});`;
   }
 
+
+  function captureParticipantState() {
+    return {
+      rows: getAllRowData().map(x => ({
+        name: x.name,
+        labels: [...(x.labels || [])],
+        rounds: [...(x.rounds || [])]
+      }))
+    };
+  }
+
+  function pushParticipantUndoState() {
+    participantUndoStack.push(captureParticipantState());
+    if (participantUndoStack.length > MAX_PARTICIPANT_UNDO) participantUndoStack.shift();
+  }
+
+  function restoreParticipantState(state) {
+    if (!state || !Array.isArray(state.rows)) return;
+    nameRowsEl.innerHTML = '';
+    if (state.rows.length) {
+      state.rows.forEach(r => addNameRow(
+        r.name || '',
+        Array.isArray(r.labels) ? r.labels : [],
+        Array.isArray(r.rounds) ? r.rounds : null
+      ));
+    } else {
+      addNameRow();
+    }
+    renumberRows();
+    syncPersonLabels();
+    updateInputRowBackgrounds();
+    refreshFixedParticipantOptions();
+    updateFixedPreview();
+    renderFixedConditions();
+    refreshParticipationRoundVisibility();
+    updateRowTotalPreviews();
+    updateBulkSelectionUI();
+    if (window.lastSchedule) {
+      const rounds = Math.max(1,Math.min(10,parseInt(roundsEl.value)||1));
+      render(cleanNames(), rounds, window.lastSchedule);
+    }
+  }
+
+  function undoParticipantEdit() {
+    if (!participantUndoStack.length) {
+      showActionNotice('参加者名欄で戻せる操作がありません。');
+      return;
+    }
+    restoreParticipantState(participantUndoStack.pop());
+    showActionNotice('参加者名欄の直前の操作を元に戻しました。');
+  }
 
   function serializeScheduleData(data) {
     if (!data) return null;
@@ -2179,6 +2310,7 @@
   }
 
   $('fill').addEventListener('click',()=>{
+    pushParticipantUndoState();
     const n=Math.max(4,Math.min(100,parseInt(countEl.value)||16));
     let rows = [...nameRowsEl.querySelectorAll('.name-row')];
 
@@ -2289,6 +2421,7 @@
 
   const nameGrid = document.querySelector('.name-grid');
   const nameResizer = $('nameResizer');
+  const labelResizer = $('labelResizer');
   let resizingNameCol = false;
   let resizeStartX = 0;
   let resizeStartWidth = 260;
@@ -2368,14 +2501,6 @@
 
   bulkLabelPopoverEl.addEventListener('click',e=>e.stopPropagation());
 
-  bulkAddSelectedLabelEl.addEventListener('click',()=>{
-    applyBulkLabel(selectedBulkLabel, 'add');
-  });
-
-  bulkRemoveSelectedLabelEl.addEventListener('click',()=>{
-    applyBulkLabel(selectedBulkLabel, 'remove');
-  });
-
   $('bulkSelectAll').addEventListener('click',()=>{
     nameRowsEl.querySelectorAll('.row-select').forEach(cb=>cb.checked=true);
     updateBulkSelectionUI();
@@ -2386,9 +2511,107 @@
     updateBulkSelectionUI();
   });
 
+  const selectAllCell = selectAllRowsEl.closest('.select-cell');
+  if (selectAllCell) {
+    selectAllCell.addEventListener('click',e=>{
+      if (e.target === selectAllRowsEl) return;
+      selectAllRowsEl.checked = !selectAllRowsEl.checked;
+      selectAllRowsEl.dispatchEvent(new Event('change', {bubbles:true}));
+    });
+  }
+
   selectAllRowsEl.addEventListener('change',()=>{
     nameRowsEl.querySelectorAll('.row-select').forEach(cb=>cb.checked=selectAllRowsEl.checked);
     updateBulkSelectionUI();
+  });
+
+  if (nameResizer) {
+    let resizingNameCol = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    nameResizer.addEventListener('pointerdown', e => {
+      resizingNameCol = true;
+      startX = e.clientX;
+      const grid = document.querySelector('.name-grid');
+      const raw = getComputedStyle(grid).getPropertyValue('--name-col').trim();
+      startWidth = parseFloat(raw) || 260;
+      nameResizer.classList.add('dragging');
+      nameResizer.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+    });
+
+    nameResizer.addEventListener('pointermove', e => {
+      if (!resizingNameCol) return;
+      const grid = document.querySelector('.name-grid');
+      if (!grid) return;
+      const next = Math.max(120, Math.min(520, startWidth + (e.clientX - startX)));
+      grid.style.setProperty('--name-col', `${next}px`);
+    });
+
+    const finishNameResize = e => {
+      if (!resizingNameCol) return;
+      resizingNameCol = false;
+      nameResizer.classList.remove('dragging');
+      try { nameResizer.releasePointerCapture?.(e.pointerId); } catch {}
+    };
+
+    nameResizer.addEventListener('pointerup', finishNameResize);
+    nameResizer.addEventListener('pointercancel', finishNameResize);
+  }
+
+  if (labelResizer) {
+    let resizingLabelCol = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    labelResizer.addEventListener('pointerdown', e => {
+      resizingLabelCol = true;
+      startX = e.clientX;
+      const grid = document.querySelector('.name-grid');
+      const raw = getComputedStyle(grid).getPropertyValue('--label-col').trim();
+      startWidth = parseFloat(raw) || 135;
+      labelResizer.classList.add('dragging');
+      labelResizer.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+    });
+
+    labelResizer.addEventListener('pointermove', e => {
+      if (!resizingLabelCol) return;
+      const grid = document.querySelector('.name-grid');
+      if (!grid) return;
+      const next = Math.max(90, Math.min(260, startWidth + (e.clientX - startX)));
+      grid.style.setProperty('--label-col', `${next}px`);
+    });
+
+    const finishLabelResize = e => {
+      if (!resizingLabelCol) return;
+      resizingLabelCol = false;
+      labelResizer.classList.remove('dragging');
+      try { labelResizer.releasePointerCapture?.(e.pointerId); } catch {}
+    };
+
+    labelResizer.addEventListener('pointerup', finishLabelResize);
+    labelResizer.addEventListener('pointercancel', finishLabelResize);
+  }
+
+  $('participantUndoBtn').addEventListener('click', undoParticipantEdit);
+
+  if (toggleDeleteColumnEl) {
+    toggleDeleteColumnEl.addEventListener('click',()=>{
+      const grid = document.querySelector('.name-grid');
+      if (!grid) return;
+      const hidden = grid.classList.toggle('delete-hidden');
+      toggleDeleteColumnEl.textContent = hidden ? '»' : '«';
+      const label = hidden ? '削除欄を表示' : '削除欄を閉じる';
+      toggleDeleteColumnEl.title = label;
+      toggleDeleteColumnEl.setAttribute('aria-label', label);
+    });
+  }
+
+  toggleAllParticipantsEl.addEventListener('click',()=>{
+    const expanded = nameRowsEl.classList.toggle('show-all');
+    toggleAllParticipantsEl.textContent = expanded ? 'コンパクト表示' : '全員表示';
   });
 
   $('helpBtn').addEventListener('click',()=>{
@@ -2421,6 +2644,7 @@
   deleteRowCountEl.addEventListener('input', updateRowTotalPreviews);
 
   $('addRow').addEventListener('click',()=>{
+    pushParticipantUndoState();
     const count = Math.max(1, Math.min(100, parseInt(addRowCountEl.value)||1));
     const current = nameRowsEl.querySelectorAll('.name-row').length;
     const canAdd = Math.max(0, 100-current);
@@ -2436,6 +2660,7 @@
   });
 
   $('deleteRows').addEventListener('click',()=>{
+    pushParticipantUndoState();
     const count = Math.max(1, Math.min(100, parseInt(deleteRowCountEl.value)||1));
     const rows = [...nameRowsEl.querySelectorAll('.name-row')];
     const removable = Math.min(count, Math.max(0, rows.length-1));
